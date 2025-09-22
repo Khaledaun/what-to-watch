@@ -12,8 +12,12 @@ export type BlogMeta = {
 
 const BLOG_PATH = path.join(process.cwd(), "content/blog");
 
+// Check if we're in a Node.js environment
+const isNodeEnv = typeof process !== 'undefined' && process.versions && process.versions.node;
+
 export function getAllPosts(): BlogMeta[] {
-  if (!fs.existsSync(BLOG_PATH)) {
+  // Return empty array if not in Node.js environment (e.g., Edge Runtime)
+  if (!isNodeEnv || !fs.existsSync(BLOG_PATH)) {
     return [];
   }
   
@@ -28,6 +32,20 @@ export function getAllPosts(): BlogMeta[] {
 }
 
 export function getPost(slug: string) {
+  // Return mock data if not in Node.js environment
+  if (!isNodeEnv) {
+    return {
+      content: `# ${slug}\n\nThis is a placeholder blog post.`,
+      data: {
+        title: slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        description: `A blog post about ${slug}`,
+        slug,
+        date: new Date().toISOString(),
+        tags: ['placeholder']
+      }
+    };
+  }
+
   const filePath = path.join(BLOG_PATH, `${slug}.mdx`);
   if (!fs.existsSync(filePath)) {
     throw new Error(`Post with slug "${slug}" not found`);
@@ -38,7 +56,8 @@ export function getPost(slug: string) {
 }
 
 export function getPostSlugs(): string[] {
-  if (!fs.existsSync(BLOG_PATH)) {
+  // Return empty array if not in Node.js environment
+  if (!isNodeEnv || !fs.existsSync(BLOG_PATH)) {
     return [];
   }
   
