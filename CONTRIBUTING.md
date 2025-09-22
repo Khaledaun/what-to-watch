@@ -273,3 +273,4 @@ Contributors will be recognized in:
 - **Community highlights** (with permission)
 
 Thank you for contributing to What to Watch Tonight! 🎬
+

@@ -143,3 +143,4 @@ export function Filters({ onFiltersChange, initialFilters, className }: FiltersP
     </Card>
   )
 }
+

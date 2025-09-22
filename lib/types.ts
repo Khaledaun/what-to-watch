@@ -92,3 +92,4 @@ export type TMDBWatchProviders = {
     rent?: TMDBProvider[]
   }>
 }
+

@@ -93,3 +93,4 @@ export function TabsOccasion({ onFiltersChange, className }: TabsOccasionProps) 
     </div>
   )
 }
+

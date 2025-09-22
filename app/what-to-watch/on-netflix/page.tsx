@@ -17,3 +17,4 @@ export const metadata: Metadata = {
 export default function NetflixPage() {
   return <PlatformPage platform="netflix" />
 }
+

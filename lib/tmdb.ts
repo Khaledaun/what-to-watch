@@ -154,3 +154,4 @@ export function getMaturityRating(details: any, type: 'movie' | 'tv'): string | 
     return details.content_ratings?.results?.find((r: any) => r.iso_3166_1 === 'US')?.rating
   }
 }
+

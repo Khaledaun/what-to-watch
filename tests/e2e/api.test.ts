@@ -143,3 +143,4 @@ describe('API Endpoints', () => {
     expect(data.traceId.length).toBeGreaterThan(0)
   })
 })
+

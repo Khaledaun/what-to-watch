@@ -54,3 +54,4 @@ export function createCORSHeaders(origin?: string) {
     'Access-Control-Max-Age': '86400',
   };
 }
+
