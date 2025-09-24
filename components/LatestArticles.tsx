@@ -157,6 +157,12 @@ export default function LatestArticles() {
                       src={article.featuredImage}
                       alt={article.title}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block'
+                      }}
                       onError={(e) => {
                         console.log('Article image failed to load:', article.featuredImage)
                         const target = e.target as HTMLImageElement

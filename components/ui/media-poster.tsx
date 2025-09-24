@@ -87,6 +87,14 @@ export function MediaPoster({
             'absolute inset-0 w-full h-full object-cover transition-opacity duration-300',
             loading ? 'opacity-0' : 'opacity-100'
           )}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+          }}
           onError={handleError}
           onLoad={handleLoad}
           loading={priority ? 'eager' : 'lazy'}
