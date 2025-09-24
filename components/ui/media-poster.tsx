@@ -31,10 +31,17 @@ export function MediaPoster({
   // Fallback logic: original src → fallback image → placeholder with initials
   const getImageSrc = () => {
     if (!src || error) {
-      return '/images/fallback/poster.webp'
+      return '/images/fallback/poster.svg'
     }
     return src
   }
+  
+  // Debug logging
+  React.useEffect(() => {
+    if (src) {
+      console.log('MediaPoster rendering with src:', src)
+    }
+  }, [src])
   
   // Generate initials from title for placeholder
   const getInitials = (title: string) => {
@@ -47,11 +54,13 @@ export function MediaPoster({
   }
   
   const handleError = () => {
+    console.log('Image failed to load:', src)
     setError(true)
     setLoading(false)
   }
   
   const handleLoad = () => {
+    console.log('Image loaded successfully:', src)
     setLoading(false)
   }
   

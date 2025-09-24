@@ -54,6 +54,12 @@ export function MovieCard({ movie, priority = false, showWhereToWatch = true }: 
                 sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
                 className="w-full"
               />
+              {/* Debug info */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="absolute top-2 left-2 bg-black/50 text-white text-xs p-1 rounded">
+                  {movie.poster_path ? `TMDB: ${movie.poster_path}` : 'No poster'}
+                </div>
+              )}
               
               {/* Rating Badge */}
               {movie.vote_average && movie.vote_average > 0 && (

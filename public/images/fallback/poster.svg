@@ -1,0 +1,7 @@
+<svg width="300" height="450" viewBox="0 0 300 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="450" fill="#1e293b"/>
+  <rect x="50" y="50" width="200" height="300" fill="#334155" rx="8"/>
+  <circle cx="150" cy="200" r="40" fill="#64748b"/>
+  <path d="M130 190L150 210L170 190" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="150" y="380" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="14">Movie Poster</text>
+</svg>
