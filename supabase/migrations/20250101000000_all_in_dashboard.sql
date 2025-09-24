@@ -194,7 +194,8 @@ CREATE TABLE IF NOT EXISTS content_templates (
     template_blocks JSONB,
     active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE (kind, name)
 );
 
 CREATE TABLE IF NOT EXISTS content_items (
