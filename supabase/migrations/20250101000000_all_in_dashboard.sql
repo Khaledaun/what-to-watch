@@ -313,6 +313,7 @@ CREATE TABLE IF NOT EXISTS job_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
     ts TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     level TEXT NOT NULL, -- info, warn, error
     message TEXT NOT NULL,
     data JSONB

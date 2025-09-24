@@ -20,13 +20,32 @@ export async function TrendingGrid({ limit = 10, showHeader = true }: TrendingGr
         .order('popularity', { ascending: false })
         .limit(limit)
       
-      movies = data || []
       if (dbError) {
+        console.error('Database error in TrendingGrid:', dbError)
         error = 'Failed to load trending movies'
+        // Use fallback data when database fails
+        movies = getFallbackMovies(limit)
+      } else {
+        movies = data || []
+        // If no data from database, use fallback
+        if (movies.length === 0) {
+          movies = getFallbackMovies(limit)
+        }
       }
     } else {
       // Fallback data when database is not available
-      movies = [
+      movies = getFallbackMovies(limit)
+    }
+  } catch (err) {
+    error = 'Failed to load trending movies'
+    console.error('TrendingGrid error:', err)
+    // Use fallback data when any error occurs
+    movies = getFallbackMovies(limit)
+  }
+
+  // Helper function for fallback movies
+  function getFallbackMovies(limit: number) {
+    return [
         {
           id: '1',
           slug: 'oppenheimer-2023',
@@ -79,10 +98,6 @@ export async function TrendingGrid({ limit = 10, showHeader = true }: TrendingGr
         }
       ].slice(0, limit)
     }
-  } catch (err) {
-    error = 'Failed to load trending movies'
-    console.error('TrendingGrid error:', err)
-  }
 
   if (error && movies.length === 0) {
     return (
