@@ -56,6 +56,12 @@ export function MovieCard({ movie, priority = false, showWhereToWatch = true }: 
               />
               {/* Debug info */}
               {process.env.NODE_ENV === 'development' && (
+                <div className="absolute top-2 right-2 bg-red-500 text-white text-xs p-1 rounded">
+                  {movie.poster_path ? `HAS: ${movie.poster_path}` : 'NO PATH'}
+                </div>
+              )}
+              {/* Debug info */}
+              {process.env.NODE_ENV === 'development' && (
                 <div className="absolute top-2 left-2 bg-black/50 text-white text-xs p-1 rounded">
                   {movie.poster_path ? `TMDB: ${movie.poster_path}` : 'No poster'}
                 </div>

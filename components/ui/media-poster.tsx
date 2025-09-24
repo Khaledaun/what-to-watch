@@ -38,7 +38,13 @@ export function MediaPoster({
   
   // Debug the component state
   React.useEffect(() => {
-    console.log('MediaPoster state:', { src, error, loading, useFallback })
+    console.log('MediaPoster state:', { 
+      src: src ? src.substring(0, 50) + '...' : 'NO SRC', 
+      error, 
+      loading, 
+      useFallback,
+      hasSrc: !!src
+    })
   }, [src, error, loading, useFallback])
   
   // Generate initials from title for placeholder
