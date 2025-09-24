@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/database';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 // Query schema
 const querySchema = z.object({
   type: z.enum(['movie', 'tv']).optional(),

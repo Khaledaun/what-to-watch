@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ArticleTopicGenerator } from '@/lib/article-generator';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 // Query schema
 const querySchema = z.object({
   status: z.string().optional(),

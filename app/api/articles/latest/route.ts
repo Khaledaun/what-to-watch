@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/database';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 // Query schema
 const querySchema = z.object({
   limit: z.coerce.number().min(1).max(20).default(6),

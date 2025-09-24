@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { env, getDefaultCountries } from '@/lib/env'
+
+export const dynamic = 'force-dynamic'
 import { FilterInput, Recommendation, RecommendationResponse } from '@/lib/types'
 import { SUPPORTED_COUNTRIES, PLATFORMS, MOODS, TIME_BUDGETS, AUDIENCES, CONTENT_TYPES, Mood } from '@/lib/constants'
 import { getCache, setCache, getRecommendationCacheKey } from '@/lib/cache'

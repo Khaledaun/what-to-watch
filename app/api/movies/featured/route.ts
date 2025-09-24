@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/database';
 
-// Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
 // Helper function to get poster path for TMDB ID

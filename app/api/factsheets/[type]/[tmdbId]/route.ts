@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/database';
+
+export const dynamic = 'force-dynamic';
 import { z } from 'zod';
 
 // Query schema

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ProfessionalCrawler } from '@/lib/crawler';
 import { GrokAutoFix } from '@/lib/grok-auto-fix';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     // Verify this is a cron request
