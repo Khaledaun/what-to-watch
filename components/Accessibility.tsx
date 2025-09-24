@@ -1,95 +1,115 @@
-"use client";
-import { useEffect, useRef } from "react";
+'use client'
 
-// Focus management for keyboard navigation
-export function useFocusManagement() {
-  const focusRef = useRef<HTMLElement>(null);
+import { useEffect } from 'react'
 
-  const focusElement = () => {
-    focusRef.current?.focus();
-  };
-
-  const trapFocus = (element: HTMLElement) => {
-    const focusableElements = element.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    const firstElement = focusableElements[0] as HTMLElement;
-    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-
-    const handleTabKey = (e: KeyboardEvent) => {
-      if (e.key === "Tab") {
-        if (e.shiftKey) {
-          if (document.activeElement === firstElement) {
-            lastElement.focus();
-            e.preventDefault();
-          }
-        } else {
-          if (document.activeElement === lastElement) {
-            firstElement.focus();
-            e.preventDefault();
-          }
-        }
-      }
-    };
-
-    element.addEventListener("keydown", handleTabKey);
-    return () => element.removeEventListener("keydown", handleTabKey);
-  };
-
-  return { focusRef, focusElement, trapFocus };
-}
-
-// ARIA live region for announcements
-export function LiveRegion({ message, priority = "polite" }: { message: string; priority?: "polite" | "assertive" }) {
-  return (
-    <div
-      aria-live={priority}
-      aria-atomic="true"
-      className="sr-only"
-      role="status"
-    >
-      {message}
-    </div>
-  );
-}
-
-// Skip link for keyboard users
+// Skip link component for keyboard navigation
 export function SkipLink() {
   return (
     <a
       href="#main-content"
-      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-[var(--gold)] text-black px-4 py-2 rounded-lg font-medium z-50"
+      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded-md z-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
     >
       Skip to main content
     </a>
-  );
+  )
 }
 
-// Focus ring utility
-export function useFocusRing() {
+// Focus trap component for modals
+export function FocusTrap({ children, active = true }: { children: React.ReactNode; active?: boolean }) {
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Tab") {
-        document.body.classList.add("keyboard-navigation");
+    if (!active) return
+
+    const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    const firstFocusableElement = document.querySelector(focusableElements) as HTMLElement
+    const focusableContent = document.querySelectorAll(focusableElements)
+    const lastFocusableElement = focusableContent[focusableContent.length - 1] as HTMLElement
+
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstFocusableElement) {
+          lastFocusableElement?.focus()
+          e.preventDefault()
+        }
+      } else {
+        if (document.activeElement === lastFocusableElement) {
+          firstFocusableElement?.focus()
+          e.preventDefault()
+        }
       }
-    };
+    }
 
-    const handleMouseDown = () => {
-      document.body.classList.remove("keyboard-navigation");
-    };
+    document.addEventListener('keydown', handleTabKey)
+    return () => document.removeEventListener('keydown', handleTabKey)
+  }, [active])
 
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("mousedown", handleMouseDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousedown", handleMouseDown);
-    };
-  }, []);
+  return <>{children}</>
 }
 
 // Screen reader only text
 export function ScreenReaderOnly({ children }: { children: React.ReactNode }) {
-  return <span className="sr-only">{children}</span>;
+  return <span className="sr-only">{children}</span>
 }
 
+// High contrast mode support
+export function HighContrastSupport() {
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-contrast: high)')
+    
+    const handleContrastChange = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        document.documentElement.classList.add('high-contrast')
+      } else {
+        document.documentElement.classList.remove('high-contrast')
+      }
+    }
+
+    // Check initial state
+    if (mediaQuery.matches) {
+      document.documentElement.classList.add('high-contrast')
+    }
+
+    mediaQuery.addEventListener('change', handleContrastChange)
+    return () => mediaQuery.removeEventListener('change', handleContrastChange)
+  }, [])
+
+  return null
+}
+
+// Reduced motion support
+export function ReducedMotionSupport() {
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    
+    const handleMotionChange = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        document.documentElement.classList.add('reduce-motion')
+      } else {
+        document.documentElement.classList.remove('reduce-motion')
+      }
+    }
+
+    // Check initial state
+    if (mediaQuery.matches) {
+      document.documentElement.classList.add('reduce-motion')
+    }
+
+    mediaQuery.addEventListener('change', handleMotionChange)
+    return () => mediaQuery.removeEventListener('change', handleMotionChange)
+  }, [])
+
+  return null
+}
+
+// Accessibility provider that combines all accessibility features
+export function AccessibilityProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <SkipLink />
+      <HighContrastSupport />
+      <ReducedMotionSupport />
+      {children}
+    </>
+  )
+}
