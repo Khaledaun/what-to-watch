@@ -421,10 +421,10 @@ ON CONFLICT (key) DO NOTHING;
 -- Insert default content templates
 INSERT INTO content_templates (kind, name, template_md, template_blocks) 
 SELECT * FROM (VALUES
-('top', 'Top 10 Movies', '# Top 10 {{genre}} Movies to Watch {{country}}\n\n{{#each movies}}\n## {{@index}}. {{title}} ({{year}})\n{{overview}}\n\n**Where to watch:** {{providers}}\n\n{{/each}}', '{}'),
-('top', 'Top 10 TV Shows', '# Top 10 {{genre}} TV Shows to Watch {{country}}\n\n{{#each shows}}\n## {{@index}}. {{title}} ({{year}})\n{{overview}}\n\n**Where to watch:** {{providers}}\n\n{{/each}}', '{}'),
-('howto', 'How to Watch', '# How to Watch {{title}} ({{year}})\n\n{{overview}}\n\n## Where to Stream {{title}}\n\n{{#each providers}}\n- **{{name}}**: {{url}}\n{{/each}}\n\n## Cast & Crew\n\n{{#each cast}}\n- **{{name}}** as {{character}}\n{{/each}}', '{}'),
-('comparison', 'Movie Comparison', '# {{title1}} vs {{title2}}: Which Should You Watch?\n\n## {{title1}} ({{year1}})\n{{overview1}}\n\n## {{title2}} ({{year2}})\n{{overview2}}\n\n## Verdict\n\n{{comparison}}', '{}')
+('top'::content_kind, 'Top 10 Movies', '# Top 10 {{genre}} Movies to Watch {{country}}\n\n{{#each movies}}\n## {{@index}}. {{title}} ({{year}})\n{{overview}}\n\n**Where to watch:** {{providers}}\n\n{{/each}}', '{}'),
+('top'::content_kind, 'Top 10 TV Shows', '# Top 10 {{genre}} TV Shows to Watch {{country}}\n\n{{#each shows}}\n## {{@index}}. {{title}} ({{year}})\n{{overview}}\n\n**Where to watch:** {{providers}}\n\n{{/each}}', '{}'),
+('howto'::content_kind, 'How to Watch', '# How to Watch {{title}} ({{year}})\n\n{{overview}}\n\n## Where to Stream {{title}}\n\n{{#each providers}}\n- **{{name}}**: {{url}}\n{{/each}}\n\n## Cast & Crew\n\n{{#each cast}}\n- **{{name}}** as {{character}}\n{{/each}}', '{}'),
+('comparison'::content_kind, 'Movie Comparison', '# {{title1}} vs {{title2}}: Which Should You Watch?\n\n## {{title1}} ({{year1}})\n{{overview1}}\n\n## {{title2}} ({{year2}})\n{{overview2}}\n\n## Verdict\n\n{{comparison}}', '{}')
 ) AS v(kind, name, template_md, template_blocks)
 WHERE NOT EXISTS (
     SELECT 1 FROM content_templates ct 
