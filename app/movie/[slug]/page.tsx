@@ -1,12 +1,16 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { db } from '@/lib/database'
 import { generateMovieStructuredData } from '@/lib/seo'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { MediaPoster } from '@/components/ui/media-poster'
+import { PlatformButtons } from '@/components/PlatformButtons'
+import { TrailerBlock } from '@/components/TrailerBlock'
+import { ShareStrip } from '@/components/ShareStrip'
+import { MovieCard } from '@/components/MovieCard'
 import { Clock, Star, Calendar, Users, Play, ExternalLink } from 'lucide-react'
 
 interface MoviePageProps {
@@ -105,6 +109,20 @@ export default async function MoviePage({ params }: MoviePageProps) {
     const episodeCount = movie.episode_count
     const seasonCount = movie.season_count
 
+    // Get similar movies for recommendations
+    let similarMovies: any[] = []
+    try {
+      const { data: similar } = await client
+        .from('titles')
+        .select('*')
+        .neq('id', movie.id)
+        .limit(6)
+        .order('popularity', { ascending: false })
+      similarMovies = similar || []
+    } catch (error) {
+      console.error('Error fetching similar movies:', error)
+    }
+
     // Generate structured data
     const structuredData = generateMovieStructuredData({
       title: movie.title,
@@ -125,9 +143,9 @@ export default async function MoviePage({ params }: MoviePageProps) {
         />
         
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-          <div className="container mx-auto px-4 py-8">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
             {/* Breadcrumb */}
-            <nav className="mb-6">
+            <nav className="mb-8">
               <ol className="flex items-center space-x-2 text-sm text-gray-300">
                 <li><Link href="/" className="hover:text-white">Home</Link></li>
                 <li>/</li>
@@ -140,16 +158,14 @@ export default async function MoviePage({ params }: MoviePageProps) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Movie Poster */}
               <div className="lg:col-span-1">
-                <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl">
-                  <Image
-                    src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '/placeholder.svg'}
-                    alt={`${movie.title} poster`}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 400px"
-                    priority
-                  />
-                </div>
+                <MediaPoster
+                  src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : undefined}
+                  alt={`${movie.title} poster`}
+                  title={movie.title}
+                  priority
+                  sizes="(max-width: 768px) 100vw, 400px"
+                  className="shadow-2xl"
+                />
               </div>
 
               {/* Movie Details */}
@@ -232,18 +248,25 @@ export default async function MoviePage({ params }: MoviePageProps) {
                   </Card>
                 )}
 
-                {/* Action Buttons */}
-                <div className="flex flex-wrap gap-4">
-                  <Button size="lg" className="bg-purple-600 hover:bg-purple-700">
-                    <Play className="w-4 h-4 mr-2" />
-                    Find Where to Watch
-                  </Button>
-                  
-                  <Button variant="outline" size="lg" className="border-slate-600 text-white hover:bg-slate-700">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    View on TMDB
-                  </Button>
-                </div>
+                {/* Where to Watch */}
+                <PlatformButtons 
+                  platforms={['netflix', 'prime', 'disney', 'hulu', 'max']}
+                  title={movie.title}
+                  year={year}
+                />
+                
+                {/* Trailer Block */}
+                <TrailerBlock 
+                  title={movie.title}
+                  posterUrl={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : undefined}
+                />
+                
+                {/* Share Strip */}
+                <ShareStrip 
+                  url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://whattowatch.com'}/movie/${slug}`}
+                  title={`Check out ${movie.title} (${year})`}
+                  description={`I found this great ${isMovie ? 'movie' : 'TV show'} on What to Watch!`}
+                />
 
                 {/* Additional Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -268,14 +291,33 @@ export default async function MoviePage({ params }: MoviePageProps) {
               </div>
             </div>
 
-            {/* Related Recommendations */}
-            <div className="mt-12">
-              <h2 className="text-2xl font-bold text-white mb-6">You Might Also Like</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {/* Placeholder for related movies - you can implement this later */}
-                <div className="text-center text-gray-400">
-                  <p>Related movies will appear here</p>
+            {/* Similar Titles */}
+            <div className="border-t my-8 md:my-10 pt-8">
+              <div className="space-y-6 md:space-y-8">
+                <div className="text-center">
+                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                    You Might Also Like
+                  </h2>
+                  <p className="text-muted-foreground mt-2">
+                    Similar {isMovie ? 'movies' : 'TV shows'} you might enjoy
+                  </p>
                 </div>
+                
+                {similarMovies.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-5 lg:gap-6">
+                    {similarMovies.map((similarMovie) => (
+                      <MovieCard 
+                        key={similarMovie.id} 
+                        movie={similarMovie}
+                        showWhereToWatch={false}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No similar titles available at the moment.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

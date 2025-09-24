@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
-import Hero from "@/components/Hero";
+import { ActionBar } from "@/components/ActionBar";
+import { TrendingGrid } from "@/components/TrendingGrid";
+import { ShareStrip } from "@/components/ShareStrip";
 import ResultCard from "@/components/ResultCard";
 import AnswerBox from "@/components/AnswerBox";
 import FAQ from "@/components/FAQ";
@@ -58,6 +60,9 @@ export default function HomePage() {
   const [announcement, setAnnouncement] = useState('');
   const [hiddenItems, setHiddenItems] = useState<Set<string>>(new Set());
   const [backlinks, setBacklinks] = useState<any[]>([]);
+  const [selectedService, setSelectedService] = useState('');
+  const [selectedMood, setSelectedMood] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
 
   // Load featured movies on component mount
   useEffect(() => {
@@ -201,112 +206,64 @@ export default function HomePage() {
       <Navigation />
       
       <main className="relative">
-        {/* Hero Section with Clear User Journey */}
-        <header className="relative overflow-hidden" role="banner">
-          {/* Subtle grain and spotlight gradients */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0A1220] via-[#0F1B2E] to-[#0A1220]"></div>
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#E0B15C]/5 via-transparent to-transparent"></div>
-          
-          <div className="relative container mx-auto px-4 py-16">
-            <div className="text-center max-w-5xl mx-auto">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6" style={{ fontFamily: 'Inter Tight, sans-serif', fontWeight: 700 }}>
-                What to Watch
-                <span className="block text-[#E0B15C]">Tonight</span>
-              </h1>
-              
-              {/* Clear Value Proposition */}
-              <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8 mb-8">
-                <p className="text-2xl text-white font-semibold mb-4">
-                  Stop endless scrolling. Get 3 perfect picks in under 60 seconds.
-                </p>
-                <p className="text-lg text-gray-300 mb-6">
-                  Tell us your mood, time, and streaming services. We'll find your perfect watch.
-                </p>
-                
-                {/* Simple 3-Step Process */}
-                <div className="grid md:grid-cols-3 gap-6 mb-8">
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-[#E0B15C] rounded-full flex items-center justify-center mx-auto mb-3">
-                      <span className="text-[#0A1220] font-bold text-lg">1</span>
-                    </div>
-                    <h3 className="text-white font-semibold mb-2">Choose Your Filters</h3>
-                    <p className="text-gray-400 text-sm">Select streaming services, mood, and time</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-[#E0B15C] rounded-full flex items-center justify-center mx-auto mb-3">
-                      <span className="text-[#0A1220] font-bold text-lg">2</span>
-                    </div>
-                    <h3 className="text-white font-semibold mb-2">Get 3 Perfect Picks</h3>
-                    <p className="text-gray-400 text-sm">AI finds movies that match your preferences</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-[#E0B15C] rounded-full flex items-center justify-center mx-auto mb-3">
-                      <span className="text-[#0A1220] font-bold text-lg">3</span>
-                    </div>
-                    <h3 className="text-white font-semibold mb-2">Start Watching</h3>
-                    <p className="text-gray-400 text-sm">Click "Play now" and enjoy your movie</p>
-                  </div>
-                </div>
-              </div>
-              
-              <ErrorBoundary>
-                <Hero onShowPicks={handleShowPicks} />
-              </ErrorBoundary>
-            </div>
-          </div>
-        </header>
+        {/* Action Bar - Top of Home */}
+        <ActionBar 
+          onGetPicks={() => handleShowPicks({ 
+            service: selectedService, 
+            mood: selectedMood, 
+            time: selectedTime 
+          })}
+          onSurpriseMe={() => handleShowPicks({ surpriseMe: true })}
+          isLoading={loadingState === 'loading'}
+        />
+        
+        {/* Trending Grid - Always Visible */}
+        <TrendingGrid limit={10} />
 
         {/* Results Section */}
-        <section id="results" className="container mx-auto px-4 py-12" aria-label="Movie Recommendations">
-          <div className="max-w-6xl mx-auto">
-            {loadingState === 'idle' && (
-              <div className="text-center py-16">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-[#E0B15C]/10 rounded-full mb-6" aria-hidden="true">
-                  <svg className="w-8 h-8 text-[#E0B15C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h2 className="text-3xl font-bold text-white mb-4" style={{ fontFamily: 'Inter Tight, sans-serif' }}>
-                  Your Perfect Movies Are Waiting
-                </h2>
-                <p className="text-gray-300 text-lg max-w-2xl mx-auto mb-8">
-                  Click "Show Me Picks" above to get 3 personalized movie recommendations. 
-                  Each pick is carefully selected based on your preferences and available on your streaming services.
-                </p>
-                
-                {/* Call to Action */}
-                <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6 max-w-md mx-auto">
-                  <p className="text-white font-semibold mb-4">Ready to find your perfect watch?</p>
-                  <button
-                    onClick={() => handleShowPicks({})}
-                    className="inline-flex items-center px-8 py-4 bg-[#E0B15C] hover:bg-[#F2C879] text-[#0A1220] font-semibold text-lg rounded-xl shadow-lg transition-all duration-200"
-                  >
-                    Show Me Picks Now
-                    <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </button>
-                </div>
+        {loadingState !== 'idle' && (
+          <section id="results" className="py-12 md:py-16">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="space-y-6 md:space-y-8">
+                {loadingState === 'loading' ? (
+                  <LoadingSkeleton />
+                ) : loadingState === 'error' ? (
+                  <ErrorState onRetry={handleRetry} />
+                ) : visibleItems.length === 0 ? (
+                  <NoResultsState onResetFilters={handleResetFilters} />
+                ) : (
+                  <>
+                    <div className="text-center">
+                      <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                        Your Perfect Picks
+                      </h2>
+                      <p className="text-muted-foreground mt-2">
+                        Handpicked just for you based on your preferences
+                      </p>
+                    </div>
+                    
+                    <div className="grid gap-4 sm:gap-5 lg:gap-6 sm:grid-cols-2 lg:grid-cols-3" role="list" aria-label="Recommended Movies">
+                      {visibleItems.map((item, index) => (
+                        <article key={index} className="transform transition-all duration-300 hover:scale-[1.02]" role="listitem">
+                          <ResultCard item={item as any} />
+                        </article>
+                      ))}
+                    </div>
+                    
+                    {/* Share Strip */}
+                    <div className="border-t my-8 md:my-10 pt-8">
+                      <ShareStrip 
+                        url={`${typeof window !== 'undefined' ? window.location.origin : ''}?service=${selectedService}&mood=${selectedMood}&time=${selectedTime}`}
+                        title="Check out these movie recommendations"
+                        description="I found some great movie recommendations using What to Watch!"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
-            )}
-
-            {loadingState === 'loading' ? (
-              <LoadingSkeleton />
-            ) : loadingState === 'error' ? (
-              <ErrorState onRetry={handleRetry} />
-            ) : visibleItems.length === 0 ? (
-              <NoResultsState onResetFilters={handleResetFilters} />
-                    ) : (
-                      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3" role="list" aria-label="Recommended Movies">
-                        {visibleItems.map((item, index) => (
-                          <article key={index} className="transform transition-all duration-300 hover:scale-105" role="listitem">
-                            <ResultCard item={item as any} />
-                          </article>
-                        ))}
-                      </div>
-                    )}
-          </div>
-        </section>
+            </div>
+          </section>
+        )}
 
         {/* Answer Box Section */}
         <section className="container mx-auto px-4 py-12">
