@@ -25,16 +25,9 @@ export function MediaPoster({
 }: MediaPosterProps) {
   const [error, setError] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [useFallback, setUseFallback] = useState(false)
   
   const aspect = ratio === '16/9' ? 'aspect-video' : 'aspect-[2/3]'
-  
-  // Fallback logic: original src → fallback image → placeholder with initials
-  const getImageSrc = () => {
-    if (!src || error) {
-      return '/images/fallback/poster.svg'
-    }
-    return src
-  }
   
   // Debug logging
   React.useEffect(() => {
@@ -54,13 +47,23 @@ export function MediaPoster({
   }
   
   const handleError = () => {
-    console.log('Image failed to load:', src)
+    console.log('Next.js Image failed to load:', src)
     setError(true)
     setLoading(false)
+    setUseFallback(true)
   }
   
   const handleLoad = () => {
-    console.log('Image loaded successfully:', src)
+    console.log('Next.js Image loaded successfully:', src)
+    setLoading(false)
+  }
+  
+  const handleFallbackError = () => {
+    console.log('Fallback img also failed to load:', src)
+  }
+  
+  const handleFallbackLoad = () => {
+    console.log('Fallback img loaded successfully:', src)
     setLoading(false)
   }
   
@@ -75,25 +78,50 @@ export function MediaPoster({
         <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted/50 to-muted animate-pulse" />
       )}
       
-      {/* Main image */}
-      <Image
-        src={getImageSrc()}
-        alt={alt}
-        fill
-        sizes={sizes || '(max-width: 768px) 50vw, 20vw'}
-        className={cn(
-          'object-cover transition-opacity duration-300',
-          loading ? 'opacity-0' : 'opacity-100'
-        )}
-        onError={handleError}
-        onLoad={handleLoad}
-        loading={priority ? 'eager' : 'lazy'}
-        placeholder="blur"
-        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-      />
+      {/* Next.js Image Component */}
+      {!useFallback && (
+        <Image
+          src={src || '/images/fallback/poster.svg'}
+          alt={alt}
+          fill
+          sizes={sizes || '(max-width: 768px) 50vw, 20vw'}
+          className={cn(
+            'object-cover transition-opacity duration-300',
+            loading ? 'opacity-0' : 'opacity-100'
+          )}
+          onError={handleError}
+          onLoad={handleLoad}
+          loading={priority ? 'eager' : 'lazy'}
+          placeholder="blur"
+          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+        />
+      )}
       
-      {/* Fallback placeholder with initials - only show if fallback image also fails */}
-      {error && title && (
+      {/* Fallback regular img tag */}
+      {useFallback && src && (
+        <img
+          src={src}
+          alt={alt}
+          className={cn(
+            'absolute inset-0 w-full h-full object-cover transition-opacity duration-300',
+            loading ? 'opacity-0' : 'opacity-100'
+          )}
+          onError={handleFallbackError}
+          onLoad={handleFallbackLoad}
+        />
+      )}
+      
+      {/* Final fallback SVG */}
+      {useFallback && !src && (
+        <img
+          src="/images/fallback/poster.svg"
+          alt={alt}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+      
+      {/* Fallback placeholder with initials - only show if all images fail */}
+      {error && !useFallback && title && (
         <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-500 to-blue-600 text-white">
           <span className="text-2xl font-bold">
             {getInitials(title)}
@@ -102,7 +130,7 @@ export function MediaPoster({
       )}
       
       {/* Final fallback if no title */}
-      {error && !title && (
+      {error && !useFallback && !title && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted text-muted-foreground">
           <svg 
             className="w-8 h-8" 

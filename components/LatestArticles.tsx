@@ -101,7 +101,7 @@ export default function LatestArticles() {
       publishedAt: "2024-01-11T14:45:00Z",
       readTime: 6,
       category: "Streaming Comparison",
-      featuredImage: "https://image.tmdb.org/t/p/w500/y8V0Xq2ni6j4uzku60Lo7UpF5zK.jpg",
+      featuredImage: "https://image.tmdb.org/t/p/w500/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
       author: "YallaCinema Team",
       tags: ["netflix", "prime video", "comparison", "streaming"]
     },
@@ -159,6 +159,11 @@ export default function LatestArticles() {
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => {
+                        console.log('Article image failed to load:', article.featuredImage)
+                        const target = e.target as HTMLImageElement
+                        target.src = '/images/fallback/poster.svg'
+                      }}
                     />
                     <div className="absolute top-4 left-4">
                       <span className="bg-[#E0B15C] text-[#0A1220] px-3 py-1 rounded-full text-sm font-medium">
