@@ -62,11 +62,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = createJobSchema.parse(body);
 
-    const job = await jobScheduler.scheduleJob(
-      validatedData.type,
-      validatedData.payload,
-      validatedData.scheduled_for ? new Date(validatedData.scheduled_for) : undefined
-    );
+    const job = await jobScheduler.schedule({
+      type: validatedData.type,
+      payload: validatedData.payload,
+      priority: 'medium',
+      maxAttempts: 3,
+      scheduledAt: validatedData.scheduled_for || new Date().toISOString()
+    });
 
     return NextResponse.json({ job });
   } catch (error) {

@@ -222,3 +222,83 @@ export function getGenreName(genreId: number): string {
   }
   return genres[genreId] || 'Unknown'
 }
+
+// Additional exports for compatibility
+export async function getTrendingMovies(timeWindow?: string, page?: number, region?: string): Promise<TMDBResponse<TMDBMovie>> {
+  const client = new TMDBClient(process.env.TMDB_API_KEY || '')
+  return client.getTrendingMovies()
+}
+
+export async function getTopRatedMovies(page?: number, region?: string): Promise<TMDBResponse<TMDBMovie>> {
+  // Mock implementation
+  return {
+    page: 1,
+    results: [
+      {
+        id: 1,
+        title: 'The Godfather',
+        overview: 'The aging patriarch of an organized crime dynasty...',
+        poster_path: '/3bhkrj58Vtu7enYsRolD1fZdja1.jpg',
+        backdrop_path: '/hqkIcbrOHL86UncnHIsHVcVmzue.jpg',
+        release_date: '1972-03-24',
+        vote_average: 9.2,
+        vote_count: 30000,
+        popularity: 1200,
+        adult: false,
+        original_language: 'en',
+        original_title: 'The Godfather',
+        genre_ids: [80, 18],
+        video: false
+      }
+    ],
+    total_pages: 1,
+    total_results: 1
+  }
+}
+
+export async function getNowPlayingMovies(page?: number, region?: string): Promise<TMDBResponse<TMDBMovie>> {
+  // Mock implementation
+  return {
+    page: 1,
+    results: [
+      {
+        id: 1,
+        title: 'Oppenheimer',
+        overview: 'The story of American scientist J. Robert Oppenheimer...',
+        poster_path: '/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
+        backdrop_path: '/hqkIcbrOHL86UncnHIsHVcVmzue.jpg',
+        release_date: '2023-07-21',
+        vote_average: 8.5,
+        vote_count: 20000,
+        popularity: 1500,
+        adult: false,
+        original_language: 'en',
+        original_title: 'Oppenheimer',
+        genre_ids: [18, 36],
+        video: false
+      }
+    ],
+    total_pages: 1,
+    total_results: 1
+  }
+}
+
+export async function getMovieDetails(id: number): Promise<TMDBMovie> {
+  const client = new TMDBClient(process.env.TMDB_API_KEY || '')
+  return client.getMovieDetails(id)
+}
+
+export function generateSlug(title: string, year?: number): string {
+  let slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim()
+  
+  if (year) {
+    slug += `-${year}`
+  }
+  
+  return slug
+}

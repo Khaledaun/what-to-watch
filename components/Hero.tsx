@@ -36,7 +36,7 @@ export default function Hero({ onShowPicks }: HeroProps) {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <LiveRegion message={announcement} />
+      <LiveRegion>{announcement}</LiveRegion>
       
       {/* Hero Decision Strip */}
       <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8 mb-8">

@@ -36,7 +36,7 @@ export default function Hero({ onShowPicks }: HeroProps) {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <LiveRegion message={announcement} />
+      <LiveRegion>{announcement}</LiveRegion>
       
       {/* Filters */}
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 mb-8">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 // Skip link component for keyboard navigation
 export function SkipLink() {
@@ -100,6 +100,32 @@ export function ReducedMotionSupport() {
   }, [])
 
   return null
+}
+
+// Hook for focus ring management
+export function useFocusRing() {
+  const [isFocused, setIsFocused] = useState(false)
+  
+  const focusProps = {
+    onFocus: () => setIsFocused(true),
+    onBlur: () => setIsFocused(false),
+    className: isFocused ? 'focus-visible:ring-2 focus-visible:ring-blue-500' : ''
+  }
+  
+  return { isFocused, focusProps }
+}
+
+// Live region component for screen readers
+export function LiveRegion({ children, level = 'polite' }: { children: React.ReactNode; level?: 'polite' | 'assertive' }) {
+  return (
+    <div
+      aria-live={level}
+      aria-atomic="true"
+      className="sr-only"
+    >
+      {children}
+    </div>
+  )
 }
 
 // Accessibility provider that combines all accessibility features
