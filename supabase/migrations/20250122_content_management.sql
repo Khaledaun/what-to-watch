@@ -21,31 +21,8 @@ CREATE TABLE IF NOT EXISTS article_topics (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Content Items Table (Articles)
-CREATE TABLE IF NOT EXISTS content_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  slug TEXT NOT NULL UNIQUE,
-  content TEXT NOT NULL,
-  excerpt TEXT,
-  category TEXT,
-  tags TEXT[] DEFAULT '{}',
-  featured_image TEXT,
-  author TEXT DEFAULT 'YallaCinema Team',
-  read_time INTEGER DEFAULT 0,
-  word_count INTEGER DEFAULT 0,
-  status TEXT CHECK (status IN ('draft', 'published', 'scheduled')) DEFAULT 'draft',
-  published_at TIMESTAMP WITH TIME ZONE,
-  scheduled_at TIMESTAMP WITH TIME ZONE,
-  seo_title TEXT,
-  seo_description TEXT,
-  focus_keyword TEXT,
-  secondary_keywords TEXT[] DEFAULT '{}',
-  generated_by TEXT,
-  source_topic_id TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+-- Content Items Table (Articles) - Note: content_items table is defined in main migration
+-- This migration only adds additional columns if needed
 
 -- SEO Crawl Results Table
 CREATE TABLE IF NOT EXISTS seo_crawl_results (
@@ -62,10 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_article_topics_status ON article_topics(status);
 CREATE INDEX IF NOT EXISTS idx_article_topics_category ON article_topics(category);
 CREATE INDEX IF NOT EXISTS idx_article_topics_generated_at ON article_topics(generated_at);
 
-CREATE INDEX IF NOT EXISTS idx_content_items_status ON content_items(status);
-CREATE INDEX IF NOT EXISTS idx_content_items_category ON content_items(category);
-CREATE INDEX IF NOT EXISTS idx_content_items_published_at ON content_items(published_at);
-CREATE INDEX IF NOT EXISTS idx_content_items_created_at ON content_items(created_at);
+-- Note: content_items indexes are defined in main migration
 
 CREATE INDEX IF NOT EXISTS idx_seo_crawl_results_url ON seo_crawl_results(url);
 CREATE INDEX IF NOT EXISTS idx_seo_crawl_results_crawled_at ON seo_crawl_results(crawled_at);
@@ -73,18 +47,12 @@ CREATE INDEX IF NOT EXISTS idx_seo_crawl_results_status ON seo_crawl_results(sta
 
 -- RLS Policies
 ALTER TABLE article_topics ENABLE ROW LEVEL SECURITY;
-ALTER TABLE content_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE seo_crawl_results ENABLE ROW LEVEL SECURITY;
 
--- Public read access for published content
-CREATE POLICY "Public read access for published content" ON content_items
-  FOR SELECT USING (status = 'published');
+-- Note: content_items RLS policies are defined in main migration
 
 -- Admin access for all content management
 CREATE POLICY "Admin access for article topics" ON article_topics
-  FOR ALL USING (true);
-
-CREATE POLICY "Admin access for content items" ON content_items
   FOR ALL USING (true);
 
 CREATE POLICY "Admin access for SEO crawl results" ON seo_crawl_results
@@ -105,10 +73,7 @@ CREATE TRIGGER update_article_topics_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_content_items_updated_at
-  BEFORE UPDATE ON content_items
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
+-- Note: content_items trigger is defined in main migration
 
 -- Sample data for testing
 INSERT INTO article_topics (id, title, slug, category, target_keywords, long_tail_keywords, content_outline, estimated_word_count, difficulty, priority, status) VALUES

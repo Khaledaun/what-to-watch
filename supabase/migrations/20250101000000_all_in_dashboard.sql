@@ -210,6 +210,7 @@ CREATE TABLE IF NOT EXISTS content_items (
     published_at TIMESTAMP WITH TIME ZONE,
     seo_jsonld JSONB,
     body_md TEXT,
+    category TEXT,
     created_by TEXT NOT NULL,
     updated_by TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -355,6 +356,7 @@ CREATE INDEX IF NOT EXISTS idx_jobs_type ON jobs(type);
 CREATE INDEX IF NOT EXISTS idx_content_items_status ON content_items(status);
 CREATE INDEX IF NOT EXISTS idx_content_items_scheduled_for ON content_items(scheduled_for);
 CREATE INDEX IF NOT EXISTS idx_content_items_published_at ON content_items(published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_content_items_category ON content_items(category);
 
 CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON audit_logs(actor_email);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity, entity_id);
