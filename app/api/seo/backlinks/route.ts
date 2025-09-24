@@ -31,68 +31,43 @@ function getMockBacklinks(pageType: string, limit: number) {
   const baseBacklinks = [
     {
       id: '1',
-      url: 'https://example.com/movie-reviews',
-      title: 'Movie Reviews Blog',
-      description: 'Comprehensive movie reviews and recommendations',
-      domain: 'example.com',
-      domainRating: 85,
-      anchorText: 'movie recommendations',
-      linkType: 'dofollow',
-      discoveredAt: '2024-01-20T10:00:00Z',
-      lastChecked: '2024-01-25T15:30:00Z',
-      status: 'active'
+      url: '/blog/top-10-action-movies-netflix-2024',
+      title: 'Top 10 Action Movies on Netflix 2024',
+      description: 'Discover the best action movies currently streaming on Netflix',
+      type: 'internal',
+      category: 'Movie Lists'
     },
     {
       id: '2',
-      url: 'https://cinema-blog.com/streaming-guides',
-      title: 'Cinema Blog - Streaming Guides',
-      description: 'Your guide to streaming movies and TV shows',
-      domain: 'cinema-blog.com',
-      domainRating: 72,
-      anchorText: 'streaming guide',
-      linkType: 'dofollow',
-      discoveredAt: '2024-01-18T14:20:00Z',
-      lastChecked: '2024-01-25T15:30:00Z',
-      status: 'active'
+      url: '/blog/how-to-watch-popular-movies-all-platforms',
+      title: 'How to Watch Popular Movies on All Platforms',
+      description: 'Complete guide to finding movies across streaming services',
+      type: 'internal',
+      category: 'Streaming Guides'
     },
     {
       id: '3',
-      url: 'https://entertainment-news.com/what-to-watch',
-      title: 'Entertainment News - What to Watch',
-      description: 'Latest entertainment news and what to watch recommendations',
-      domain: 'entertainment-news.com',
-      domainRating: 68,
-      anchorText: 'what to watch tonight',
-      linkType: 'dofollow',
-      discoveredAt: '2024-01-15T09:45:00Z',
-      lastChecked: '2024-01-25T15:30:00Z',
-      status: 'active'
+      url: '/blog/netflix-vs-prime-video-better-movies-comparison',
+      title: 'Netflix vs Prime Video: Which Has Better Movies?',
+      description: 'Compare the movie libraries of top streaming services',
+      type: 'internal',
+      category: 'Streaming Comparison'
     },
     {
       id: '4',
-      url: 'https://movie-fanatics.com/recommendations',
-      title: 'Movie Fanatics - Recommendations',
-      description: 'Movie recommendations for every mood and occasion',
-      domain: 'movie-fanatics.com',
-      domainRating: 91,
-      anchorText: 'movie recommendations',
-      linkType: 'dofollow',
-      discoveredAt: '2024-01-12T16:30:00Z',
-      lastChecked: '2024-01-25T15:30:00Z',
-      status: 'active'
+      url: '/movies/trending',
+      title: 'Trending Movies This Week',
+      description: 'See what movies are trending and popular right now',
+      type: 'internal',
+      category: 'Movie Discovery'
     },
     {
       id: '5',
-      url: 'https://streaming-guide.net/best-movies',
-      title: 'Streaming Guide - Best Movies',
-      description: 'Find the best movies to stream on your favorite platforms',
-      domain: 'streaming-guide.net',
-      domainRating: 76,
-      anchorText: 'best movies to stream',
-      linkType: 'dofollow',
-      discoveredAt: '2024-01-10T11:15:00Z',
-      lastChecked: '2024-01-25T15:30:00Z',
-      status: 'active'
+      url: '/blog/best-drama-movies-prime-video-hidden-gems',
+      title: 'Best Drama Movies on Prime Video',
+      description: 'Hidden gem drama movies you need to watch',
+      type: 'internal',
+      category: 'Movie Reviews'
     }
   ];
 
@@ -102,20 +77,20 @@ function getMockBacklinks(pageType: string, limit: number) {
   switch (pageType) {
     case 'home':
       filteredBacklinks = baseBacklinks.filter(link => 
-        link.anchorText.includes('recommendations') || 
-        link.anchorText.includes('what to watch')
+        link.category.includes('Movie') || 
+        link.category.includes('Streaming')
       );
       break;
     case 'movies':
       filteredBacklinks = baseBacklinks.filter(link => 
-        link.anchorText.includes('movie') || 
-        link.anchorText.includes('cinema')
+        link.category.includes('Movie') || 
+        link.category.includes('Discovery')
       );
       break;
     case 'streaming':
       filteredBacklinks = baseBacklinks.filter(link => 
-        link.anchorText.includes('streaming') || 
-        link.anchorText.includes('watch')
+        link.category.includes('Streaming') || 
+        link.category.includes('Guide')
       );
       break;
     default:

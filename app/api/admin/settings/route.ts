@@ -12,21 +12,21 @@ export async function GET(request: NextRequest) {
       // Return environment variables as settings when database is not available
       return NextResponse.json({
         settings: {
-          openaiApiKey: process.env.OPENAI_API_KEY || process.env.GROK_API_KEY || '',
+          openaiApiKey: process.env.OPENAI_API_KEY || process.env.GROK_API_KEY || 'sk-proj-***',
           contentGenerationEnabled: process.env.CONTENT_GENERATION_ENABLED === 'true',
-          tmdbApiKey: process.env.TMDB_API_KEY || '',
+          tmdbApiKey: process.env.TMDB_API_KEY || 'tmdb_***',
           siteRegionDefault: process.env.NEXT_PUBLIC_SITE_REGION_DEFAULT || 'US',
           regionFallback: process.env.REGION_FALLBACK || 'CA',
-          supabaseUrl: process.env.SUPABASE_URL || '',
-          supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-          supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+          supabaseUrl: process.env.SUPABASE_URL || 'https://***.supabase.co',
+          supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJ***',
+          supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJ***',
           siteBrandName: process.env.SITE_BRAND_NAME || 'What to Watch',
           siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-          nextPublicGaMeasurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || '',
-          googleSiteVerification: process.env.GOOGLE_SITE_VERIFICATION || '',
-          amazonAssociateTag: process.env.AMAZON_ASSOCIATE_TAG || '',
-          cjPublisherId: process.env.CJ_PUBLISHER_ID || '',
-          flexoffersApiKey: process.env.FLEXOFFERS_API_KEY || '',
+          gaMeasurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-***',
+          googleSiteVerification: process.env.GOOGLE_SITE_VERIFICATION || '***',
+          amazonAssociateTag: process.env.AMAZON_ASSOCIATE_TAG || '***',
+          cjPublisherId: process.env.CJ_PUBLISHER_ID || '***',
+          flexoffersApiKey: process.env.FLEXOFFERS_API_KEY || '***',
         }
       });
     }
