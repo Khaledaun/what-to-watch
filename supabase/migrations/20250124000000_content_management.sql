@@ -114,9 +114,7 @@ COMMENT ON COLUMN article_topics.long_tail_keywords IS 'Long-tail keywords for b
 COMMENT ON COLUMN article_topics.authority_links IS 'High-authority links for content credibility';
 COMMENT ON COLUMN article_topics.seo_data IS 'Complete SEO metadata including meta tags and structured data';
 
-COMMENT ON COLUMN content_items.read_time IS 'Estimated reading time in minutes';
-COMMENT ON COLUMN content_items.word_count IS 'Total word count of the article';
-COMMENT ON COLUMN content_items.scheduled_at IS 'When the article should be published (for scheduled posts)';
+-- Note: content_items column comments are defined in main migration
 
 COMMENT ON COLUMN seo_crawl_results.issues IS 'Array of SEO issues found during crawl';
 COMMENT ON COLUMN seo_crawl_results.metrics IS 'Performance and technical metrics from crawl';

@@ -490,3 +490,8 @@ CREATE TRIGGER update_jobs_updated_at BEFORE UPDATE ON jobs FOR EACH ROW EXECUTE
 
 DROP TRIGGER IF EXISTS update_settings_updated_at ON settings;
 CREATE TRIGGER update_settings_updated_at BEFORE UPDATE ON settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Comments for content_items columns
+COMMENT ON COLUMN content_items.read_time IS 'Estimated reading time in minutes';
+COMMENT ON COLUMN content_items.word_count IS 'Total word count of the article';
+COMMENT ON COLUMN content_items.scheduled_at IS 'When the article should be published (for scheduled posts)';
