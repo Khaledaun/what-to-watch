@@ -78,22 +78,18 @@ export function MediaPoster({
         <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted/50 to-muted animate-pulse" />
       )}
       
-      {/* Next.js Image Component */}
+      {/* Regular img tag - bypass Next.js Image optimization */}
       {!useFallback && (
-        <Image
+        <img
           src={src || '/images/fallback/poster.svg'}
           alt={alt}
-          fill
-          sizes={sizes || '(max-width: 768px) 50vw, 20vw'}
           className={cn(
-            'object-cover transition-opacity duration-300',
+            'absolute inset-0 w-full h-full object-cover transition-opacity duration-300',
             loading ? 'opacity-0' : 'opacity-100'
           )}
           onError={handleError}
           onLoad={handleLoad}
           loading={priority ? 'eager' : 'lazy'}
-          placeholder="blur"
-          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
         />
       )}
       

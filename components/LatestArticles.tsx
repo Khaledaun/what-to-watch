@@ -153,16 +153,17 @@ export default function LatestArticles() {
               <div className="bg-white/5 rounded-2xl overflow-hidden border border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-[1.02]">
                 {article.featuredImage && (
                   <div className="relative aspect-video overflow-hidden">
-                    <Image
+                    <img
                       src={article.featuredImage}
                       alt={article.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       onError={(e) => {
                         console.log('Article image failed to load:', article.featuredImage)
                         const target = e.target as HTMLImageElement
                         target.src = '/images/fallback/poster.svg'
+                      }}
+                      onLoad={() => {
+                        console.log('Article image loaded successfully:', article.featuredImage)
                       }}
                     />
                     <div className="absolute top-4 left-4">
