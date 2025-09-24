@@ -1,209 +1,118 @@
-"use client";
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
+'use client'
 
-interface SearchResult {
-  tmdb_id: number;
-  title: string;
-  slug: string;
-  release_date: string;
-  vote_average: number;
-  poster_path: string;
-  type: string;
+import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Search, Filter, Calendar } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+interface SearchFormProps {
+  initialQuery?: string
+  initialType?: string
+  initialYear?: string
 }
 
-export default function SearchForm() {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
-
-  const handleSearch = async (searchQuery: string) => {
-    if (!searchQuery.trim()) {
-      setResults([]);
-      setHasSearched(false);
-      return;
-    }
-
-    setLoading(true);
-    setHasSearched(true);
-
-    try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
-      if (response.ok) {
-        const data = await response.json();
-        setResults(data.results || []);
-      } else {
-        setResults([]);
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+export default function SearchForm({ initialQuery = '', initialType = '', initialYear = '' }: SearchFormProps) {
+  const [query, setQuery] = useState(initialQuery)
+  const [type, setType] = useState(initialType)
+  const [year, setYear] = useState(initialYear)
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSearch(query);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setQuery(value);
+    e.preventDefault()
     
-    // Debounced search
-    const timeoutId = setTimeout(() => {
-      handleSearch(value);
-    }, 300);
+    const params = new URLSearchParams()
+    if (query.trim()) params.set('q', query.trim())
+    if (type) params.set('type', type)
+    if (year) params.set('year', year)
+    
+    router.push(`/search?${params.toString()}`)
+  }
 
-    return () => clearTimeout(timeoutId);
-  };
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: 50 }, (_, i) => currentYear - i)
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      {/* Search Form */}
-      <form onSubmit={handleSubmit} className="mb-8">
-        <div className="relative">
-          <input
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Search Input */}
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
             type="text"
-            value={query}
-            onChange={handleInputChange}
             placeholder="Search for movies, TV shows, actors..."
-            className="w-full px-6 py-4 pr-12 bg-white/10 backdrop-blur-sm border-2 border-white/30 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder-gray-400 focus:border-purple-500"
           />
-          <button
-            type="submit"
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200"
-          >
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
         </div>
-      </form>
 
-      {/* Search Results */}
-      {loading && (
-        <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <p className="text-slate-300 mt-2">Searching...</p>
-        </div>
-      )}
+        {/* Type Filter */}
+        <Select value={type} onValueChange={setType}>
+          <SelectTrigger className="w-full md:w-40 bg-slate-800/50 border-slate-700 text-white">
+            <Filter className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="All Types" />
+          </SelectTrigger>
+          <SelectContent className="bg-slate-800 border-slate-700">
+            <SelectItem value="">All Types</SelectItem>
+            <SelectItem value="movie">Movies</SelectItem>
+            <SelectItem value="tv">TV Shows</SelectItem>
+          </SelectContent>
+        </Select>
 
-      {hasSearched && !loading && (
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-          {results.length > 0 ? (
-            <div>
-              <h2 className="text-xl font-bold text-white mb-4">
-                Search Results ({results.length})
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {results.map((result) => (
-                  <Link key={result.tmdb_id} href={`/movie/${result.slug}`} className="group">
-                    <div className="bg-slate-800/50 rounded-lg p-4 hover:bg-slate-700/50 transition-all duration-200 transform hover:scale-105">
-                      <div className="flex gap-4">
-                        {result.poster_path && (
-                          <div className="relative w-16 h-24 flex-shrink-0">
-                            <Image
-                              src={`https://image.tmdb.org/t/p/w200${result.poster_path}`}
-                              alt={`${result.title} poster`}
-                              fill
-                              className="object-cover rounded"
-                              sizes="64px"
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <h3 className="text-white font-semibold mb-1 group-hover:text-blue-400 transition-colors">
-                            {result.title}
-                          </h3>
-                          <p className="text-slate-400 text-sm mb-2">
-                            {new Date(result.release_date).getFullYear()} • {result.vote_average ? result.vote_average.toFixed(1) : 'N/A'}/10
-                          </p>
-                          <span className="inline-block px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
-                            {result.type === 'movie' ? 'Movie' : 'TV Show'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <svg className="w-16 h-16 text-slate-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <h3 className="text-lg font-semibold text-white mb-2">No Results Found</h3>
-              <p className="text-slate-300 mb-4">
-                We couldn't find any movies or TV shows matching "{query}". Try a different search term.
-              </p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                <button
-                  onClick={() => setQuery('action')}
-                  className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
-                >
-                  Action
-                </button>
-                <button
-                  onClick={() => setQuery('comedy')}
-                  className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
-                >
-                  Comedy
-                </button>
-                <button
-                  onClick={() => setQuery('drama')}
-                  className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
-                >
-                  Drama
-                </button>
-                <button
-                  onClick={() => setQuery('horror')}
-                  className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
-                >
-                  Horror
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Popular Searches */}
-      {!hasSearched && (
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8">
-          <h2 className="text-xl font-bold text-white mb-6">Popular Searches</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              'The Shawshank Redemption',
-              'The Godfather',
-              'Pulp Fiction',
-              'The Dark Knight',
-              'Forrest Gump',
-              'Inception',
-              'The Matrix',
-              'Goodfellas'
-            ].map((searchTerm) => (
-              <button
-                key={searchTerm}
-                onClick={() => {
-                  setQuery(searchTerm);
-                  handleSearch(searchTerm);
-                }}
-                className="p-3 bg-slate-800/50 rounded-lg text-white hover:bg-slate-700/50 transition-colors text-left"
-              >
-                {searchTerm}
-              </button>
+        {/* Year Filter */}
+        <Select value={year} onValueChange={setYear}>
+          <SelectTrigger className="w-full md:w-32 bg-slate-800/50 border-slate-700 text-white">
+            <Calendar className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Any Year" />
+          </SelectTrigger>
+          <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
+            <SelectItem value="">Any Year</SelectItem>
+            {years.map((year) => (
+              <SelectItem key={year} value={year.toString()}>
+                {year}
+              </SelectItem>
             ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+          </SelectContent>
+        </Select>
+
+        {/* Search Button */}
+        <Button 
+          type="submit" 
+          className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+        >
+          Search
+        </Button>
+      </div>
+
+      {/* Quick Filters */}
+      <div className="flex flex-wrap gap-2">
+        <span className="text-gray-400 text-sm">Quick filters:</span>
+        {[
+          { label: '2024', value: '2024' },
+          { label: 'Netflix', value: 'netflix' },
+          { label: 'Action', value: 'action' },
+          { label: 'Comedy', value: 'comedy' },
+          { label: 'Horror', value: 'horror' },
+        ].map((filter) => (
+          <button
+            key={filter.value}
+            type="button"
+            onClick={() => {
+              if (filter.value === '2024') {
+                setYear('2024')
+              } else {
+                setQuery(filter.label)
+              }
+            }}
+            className="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded-full transition-colors"
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+    </form>
+  )
 }
-
-
