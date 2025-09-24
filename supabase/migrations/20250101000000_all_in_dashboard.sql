@@ -1,6 +1,6 @@
 -- Enable necessary extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS "pg_trgm" SCHEMA extensions;
 
 -- Create enums
 CREATE TYPE title_type AS ENUM ('movie', 'tv');
@@ -126,7 +126,7 @@ CREATE TABLE watch_providers (
     buy JSONB, -- array of provider objects
     link TEXT,
     fetched_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    PRIMARY KEY (title_id, country)
+    UNIQUE (title_id, country)
 );
 
 CREATE TABLE raw_snapshots (
@@ -300,7 +300,7 @@ CREATE INDEX idx_titles_tmdb_id ON titles(tmdb_id);
 CREATE INDEX idx_titles_popularity ON titles(popularity DESC);
 CREATE INDEX idx_titles_vote_average ON titles(vote_average DESC);
 
-CREATE INDEX idx_watch_providers_title_country ON watch_providers(title_id, country);
+-- idx_watch_providers_title_country is redundant with UNIQUE constraint
 CREATE INDEX idx_watch_providers_country ON watch_providers(country);
 
 CREATE INDEX idx_news_articles_published_at ON news_articles(published_at DESC);
