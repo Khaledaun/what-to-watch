@@ -170,7 +170,7 @@ export class MoviePopulator {
       const byYear: any = {};
       const byGenre: any = {};
 
-      movies?.forEach(movie => {
+      movies?.forEach((movie: any) => {
         // Count by year
         const year = new Date(movie.release_date).getFullYear();
         byYear[year] = (byYear[year] || 0) + 1;

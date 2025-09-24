@@ -31,22 +31,22 @@ export async function GET(request: NextRequest) {
       {
         id: 'topic-generation',
         title: 'Weekly Topic Generation',
-        status: jobs?.find(j => j.type === 'generate_weekly_topics')?.status || 'pending',
-        description: 'Generate 7 diverse article topics with SEO data',
-        timestamp: jobs?.find(j => j.type === 'generate_weekly_topics')?.created_at,
-        duration: jobs?.find(j => j.type === 'generate_weekly_topics')?.finished_at ? 
-          new Date(jobs.find(j => j.type === 'generate_weekly_topics')?.finished_at).getTime() - 
-          new Date(jobs.find(j => j.type === 'generate_weekly_topics')?.started_at).getTime() : undefined
+        status: jobs?.find((j: any) => j.type === 'generate_weekly_topics')?.status || 'pending',
+        description: 'Generate 7 diverse article topics with SEO data',  
+        timestamp: jobs?.find((j: any) => j.type === 'generate_weekly_topics')?.created_at,
+        duration: jobs?.find((j: any) => j.type === 'generate_weekly_topics')?.finished_at ?
+          new Date(jobs.find((j: any) => j.type === 'generate_weekly_topics')?.finished_at).getTime() - 
+          new Date(jobs.find((j: any) => j.type === 'generate_weekly_topics')?.started_at).getTime() : undefined
       },
       {
         id: 'article-generation',
         title: 'Article Generation',
-        status: jobs?.find(j => j.type === 'generate_article_from_topic')?.status || 'pending',
+        status: jobs?.find((j: any) => j.type === 'generate_article_from_topic')?.status || 'pending',
         description: 'Generate full articles using Grok-4-fast-reasoning',
-        timestamp: jobs?.find(j => j.type === 'generate_article_from_topic')?.created_at,
-        duration: jobs?.find(j => j.type === 'generate_article_from_topic')?.finished_at ? 
-          new Date(jobs.find(j => j.type === 'generate_article_from_topic')?.finished_at).getTime() - 
-          new Date(jobs.find(j => j.type === 'generate_article_from_topic')?.started_at).getTime() : undefined
+        timestamp: jobs?.find((j: any) => j.type === 'generate_article_from_topic')?.created_at,
+        duration: jobs?.find((j: any) => j.type === 'generate_article_from_topic')?.finished_at ? 
+          new Date(jobs.find((j: any) => j.type === 'generate_article_from_topic')?.finished_at).getTime() - 
+          new Date(jobs.find((j: any) => j.type === 'generate_article_from_topic')?.started_at).getTime() : undefined
       },
       {
         id: 'seo-optimization',

@@ -33,7 +33,7 @@ export class SEOBacklinkManager {
         .limit(10);
 
       if (!moviesError && popularMovies) {
-        popularMovies.forEach(movie => {
+        popularMovies.forEach((movie: any) => {
           if (movie.slug !== pageSlug) { // Don't link to self
             backlinks.push({
               url: `/movie/${movie.slug}`,
@@ -54,7 +54,7 @@ export class SEOBacklinkManager {
         .limit(5);
 
       if (!blogError && blogPosts) {
-        blogPosts.forEach(post => {
+        blogPosts.forEach((post: any) => {
           if (post.slug !== pageSlug) {
             backlinks.push({
               url: `/blog/${post.slug}`,

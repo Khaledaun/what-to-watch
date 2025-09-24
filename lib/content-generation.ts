@@ -172,7 +172,7 @@ export class ContentGenerator {
     return this.renderTemplate(template.template, {
       genre,
       country,
-      [type === 'movie' ? 'movies' : 'shows']: titles.map(title => ({
+      [type === 'movie' ? 'movies' : 'shows']: titles.map((title: any) => ({
         title: title.title,
         year: new Date(title.release_date || title.first_air_date).getFullYear(),
         overview: title.overview,

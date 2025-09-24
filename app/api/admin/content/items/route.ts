@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform data for the frontend
-    const transformedItems = (contentItems || []).map(item => ({
+    const transformedItems = (contentItems || []).map((item: any) => ({
       id: item.id,
       title: item.title,
       type: item.category?.toLowerCase() || 'article',
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       generatedBy: item.generated_by
     }));
 
-    const transformedTopics = (topics || []).map(topic => ({
+    const transformedTopics = (topics || []).map((topic: any) => ({
       id: topic.id,
       title: topic.title,
       type: 'topic',

@@ -76,7 +76,7 @@ export default async function NotFound() {
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-12">
               <h2 className="text-2xl font-bold text-white mb-6">Popular Movies You Might Like</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                {popularMovies.map((movie) => (
+                {popularMovies.map((movie: any) => (
                   <Link key={movie.tmdb_id} href={`/movie/${movie.slug}`} className="group">
                     <div className="bg-slate-800/50 rounded-lg overflow-hidden hover:bg-slate-700/50 transition-all duration-200 transform hover:scale-105">
                       {movie.poster_path && (

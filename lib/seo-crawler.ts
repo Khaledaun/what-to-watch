@@ -363,7 +363,7 @@ export class SEOCrawler {
         return [];
       }
 
-      return (data || []).map(row => ({
+      return (data || []).map((row: any) => ({
         url: row.url,
         status: row.status,
         issues: row.issues,

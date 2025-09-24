@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform articles with organized metadata
-    const organizedArticles = articles?.map(article => {
+    const organizedArticles = articles?.map((article: any) => {
       const seoData = typeof article.seo_jsonld === 'string' 
         ? JSON.parse(article.seo_jsonld) 
         : article.seo_jsonld;
@@ -74,14 +74,14 @@ export async function GET(request: NextRequest) {
     // Calculate summary statistics
     const summary = {
       total: organizedArticles.length,
-      byKind: organizedArticles.reduce((acc, article) => {
+      byKind: organizedArticles.reduce((acc: any, article: any) => {
         acc[article.kind] = (acc[article.kind] || 0) + 1;
         return acc;
       }, {} as Record<string, number>),
-      totalWords: organizedArticles.reduce((sum, article) => sum + article.wordCount, 0),
-      averageReadingTime: Math.round(organizedArticles.reduce((sum, article) => sum + article.readingTime, 0) / organizedArticles.length),
-      totalAffiliateLinks: organizedArticles.reduce((sum, article) => sum + article.affiliateLinks.length, 0),
-      averageSEOScore: Math.round(organizedArticles.reduce((sum, article) => sum + article.seoScore, 0) / organizedArticles.length)
+      totalWords: organizedArticles.reduce((sum: number, article: any) => sum + article.wordCount, 0),
+      averageReadingTime: Math.round(organizedArticles.reduce((sum: number, article: any) => sum + article.readingTime, 0) / organizedArticles.length),
+      totalAffiliateLinks: organizedArticles.reduce((sum: number, article: any) => sum + article.affiliateLinks.length, 0),
+      averageSEOScore: Math.round(organizedArticles.reduce((sum: number, article: any) => sum + article.seoScore, 0) / organizedArticles.length)
     };
 
     return NextResponse.json({

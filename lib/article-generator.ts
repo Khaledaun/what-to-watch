@@ -696,7 +696,7 @@ export class ArticleTopicGenerator {
         return [];
       }
 
-      return (data || []).map(row => ({
+      return (data || []).map((row: any) => ({
         id: row.id,
         title: row.title,
         slug: row.slug,

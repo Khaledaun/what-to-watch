@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/database';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // Helper function to get poster path for TMDB ID
 function getPosterPath(tmdbId: number): string {
   const posterMap: Record<number, string> = {
@@ -109,7 +112,16 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '3');
 
     // Get featured movies from database
-    const { data: movies, error } = await db.ensureClient()
+    const client = db.ensureClient();
+    if (!client) {
+      // Return empty data if database is not available
+      return NextResponse.json({
+        movies: [],
+        count: 0
+      });
+    }
+
+    const { data: movies, error } = await client
       .from('titles')
       .select(`
         id,
@@ -139,7 +151,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform data to match frontend expectations
-    const transformedMovies = movies?.map(movie => {
+    const transformedMovies = movies?.map((movie: any) => {
       // Get actual poster path from TMDB
       const posterPath = getPosterPath(movie.tmdb_id);
       

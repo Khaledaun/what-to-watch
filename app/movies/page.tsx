@@ -19,11 +19,20 @@ export const metadata: Metadata = {
 
 export default async function MoviesPage() {
   // Fetch featured movies for the page
-  const { data: movies, error } = await db.ensureClient()
-    .from('titles')
-    .select('*')
-    .order('popularity', { ascending: false })
-    .limit(20);
+  const client = db.ensureClient();
+  let movies = [];
+  let error = null;
+
+  if (client) {
+    const result = await client
+      .from('titles')
+      .select('*')
+      .order('popularity', { ascending: false })
+      .limit(20);
+    
+    movies = result.data || [];
+    error = result.error;
+  }
 
   if (error) {
     console.error('Error fetching movies:', error);
@@ -33,11 +42,11 @@ export default async function MoviesPage() {
   const collectionLD = generateCollectionLD({
     name: 'All Movies',
     description: 'Browse our complete collection of movies. Find the perfect film for any mood, time, or streaming platform.',
-    items: movies?.map(movie => ({
+    items: movies.map((movie: any) => ({
       name: movie.title,
       url: `/movie/${movie.slug}`,
       type: 'Movie' as const,
-    })) || [],
+    })),
     url: 'https://whattowatch.com/movies',
   });
 
@@ -141,7 +150,7 @@ export default async function MoviesPage() {
         <section>
           <h2 className="text-2xl font-bold mb-6">Featured Movies</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {movies?.map((movie) => (
+            {movies.map((movie: any) => (
               <Link key={movie.id} href={`/movie/${movie.slug}`} className="group">
                 <article className="bg-white/5 rounded-xl overflow-hidden hover:bg-white/10 transition-all duration-300 group-hover:scale-105">
                   <div className="relative aspect-[2/3]">

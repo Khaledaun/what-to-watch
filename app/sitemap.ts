@@ -103,7 +103,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select('slug, updated_at')
       .limit(1000) // Limit to prevent sitemap from being too large
     
-    movieRoutes = movies?.map(movie => ({
+    movieRoutes = movies?.map((movie: any) => ({
       url: `${baseUrl}/movie/${movie.slug}`,
       lastModified: movie.updated_at ? new Date(movie.updated_at) : currentDate,
       changeFrequency: 'monthly' as const,

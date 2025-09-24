@@ -104,7 +104,7 @@ export class ProfessionalCrawler {
         .limit(1000); // Crawl top 1000 movies
 
       if (!error && movies) {
-        movies.forEach(movie => {
+        movies.forEach((movie: any) => {
           urls.add(`${this.baseUrl}/movie/${movie.slug}`);
         });
       }
@@ -121,7 +121,7 @@ export class ProfessionalCrawler {
         .limit(100);
 
       if (!error && posts) {
-        posts.forEach(post => {
+        posts.forEach((post: any) => {
           urls.add(`${this.baseUrl}/blog/${post.slug}`);
         });
       }

@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
         .limit(limit);
 
       if (!moviesError && movies) {
-        results.movies = movies.map(movie => ({
+        results.movies = movies.map((movie: any) => ({
           id: movie.id,
           type: 'movie',
           title: movie.title,
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
         .limit(limit);
 
       if (!articlesError && articles) {
-        results.articles = articles.map(article => {
+        results.articles = articles.map((article: any) => {
           const seoData = typeof article.seo_jsonld === 'string' 
             ? JSON.parse(article.seo_jsonld) 
             : article.seo_jsonld;

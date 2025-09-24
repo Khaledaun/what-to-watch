@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
         .limit(limit);
 
       if (!moviesError && movies) {
-        movies.forEach(movie => {
+        movies.forEach((movie: any) => {
           urls.push({
             id: movie.id,
             type: 'movie',
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
         .limit(limit);
 
       if (!articlesError && articles) {
-        articles.forEach(article => {
+        articles.forEach((article: any) => {
           const seoData = typeof article.seo_jsonld === 'string' 
             ? JSON.parse(article.seo_jsonld) 
             : article.seo_jsonld;

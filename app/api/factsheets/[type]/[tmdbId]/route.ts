@@ -104,8 +104,8 @@ export async function GET(
       } : null,
       images: images || [],
       videos: videos || [],
-      cast: credits?.filter(c => c.character) || [],
-      crew: credits?.filter(c => c.job) || [],
+      cast: credits?.filter((c: any) => c.character) || [],
+      crew: credits?.filter((c: any) => c.job) || [],
       last_updated: factsheet.last_verified_at
     };
 

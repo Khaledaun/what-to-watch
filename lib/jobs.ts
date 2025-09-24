@@ -406,7 +406,9 @@ export class JobExecutor {
       payload: { topicId, priority: 'medium' as const },
       status: 'running' as const,
       attempts: 0,
-      scheduledAt: new Date().toISOString()
+      scheduled_for: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
     
     await jobProcessor.processArticleGeneration(job)

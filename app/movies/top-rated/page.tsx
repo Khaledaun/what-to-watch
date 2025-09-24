@@ -34,7 +34,7 @@ export default async function TopRatedMoviesPage() {
   const collectionLD = generateCollectionLD({
     name: 'Top Rated Movies - Critics Choice',
     description: 'Discover the highest rated movies of all time. Critics choice films with the best ratings and reviews.',
-    items: movies?.map(movie => ({
+    items: movies?.map((movie: any) => ({
       name: movie.title,
       url: `/movie/${movie.slug}`,
       type: 'Movie' as const,
@@ -117,7 +117,7 @@ export default async function TopRatedMoviesPage() {
         {/* Top Rated Movies Grid */}
         <section>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {movies?.map((movie) => (
+            {movies?.map((movie: any) => (
               <Link key={movie.id} href={`/movie/${movie.slug}`} className="group">
                 <article className="bg-white/5 rounded-xl overflow-hidden hover:bg-white/10 transition-all duration-300 group-hover:scale-105">
                   <div className="relative aspect-[2/3]">

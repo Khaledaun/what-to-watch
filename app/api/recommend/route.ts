@@ -65,7 +65,16 @@ export async function GET(request: NextRequest) {
     }
     
     // Generate recommendations
-    const recommendations = await generateRecommendations(validatedInput, traceId)
+    const finalFilterInput: FilterInput = {
+      countries: (validatedInput.countries || getDefaultCountries()) as any,
+      platforms: (validatedInput.platforms || []) as any,
+      moods: validatedInput.moods,
+      timeBudget: validatedInput.timeBudget,
+      audience: validatedInput.audience,
+      type: validatedInput.type,
+      limit: validatedInput.limit
+    }
+    const recommendations = await generateRecommendations(finalFilterInput, traceId)
     
     // Cache the results
     const response: RecommendationResponse = {
