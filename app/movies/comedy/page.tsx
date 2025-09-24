@@ -19,11 +19,20 @@ export const metadata: Metadata = {
 
 export default async function ComedyMoviesPage() {
   // Fetch comedy movies (for now, we'll use recent movies as a proxy)
-  const { data: movies, error } = await db.ensureClient()
-    .from('titles')
-    .select('*')
-    .order('release_date', { ascending: false })
-    .limit(50);
+  const client = db.ensureClient();
+  let movies = [];
+  let error = null;
+
+  if (client) {
+    const result = await client
+      .from('titles')
+      .select('*')
+      .order('release_date', { ascending: false })
+      .limit(50);
+    
+    movies = result.data || [];
+    error = result.error;
+  }
 
   if (error) {
     console.error('Error fetching comedy movies:', error);

@@ -19,12 +19,21 @@ export const metadata: Metadata = {
 
 export default async function TopRatedMoviesPage() {
   // Fetch top-rated movies
-  const { data: movies, error } = await db.ensureClient()
-    .from('titles')
-    .select('*')
-    .gte('vote_count', 100) // Minimum vote count for reliability
-    .order('vote_average', { ascending: false })
-    .limit(50);
+  const client = db.ensureClient();
+  let movies = [];
+  let error = null;
+
+  if (client) {
+    const result = await client
+      .from('titles')
+      .select('*')
+      .gte('vote_count', 100) // Minimum vote count for reliability
+      .order('vote_average', { ascending: false })
+      .limit(50);
+    
+    movies = result.data || [];
+    error = result.error;
+  }
 
   if (error) {
     console.error('Error fetching top-rated movies:', error);

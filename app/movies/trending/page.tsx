@@ -19,11 +19,20 @@ export const metadata: Metadata = {
 
 export default async function TrendingMoviesPage() {
   // Fetch trending movies
-  const { data: movies, error } = await db.ensureClient()
-    .from('titles')
-    .select('*')
-    .order('popularity', { ascending: false })
-    .limit(50);
+  const client = db.ensureClient();
+  let movies = [];
+  let error = null;
+
+  if (client) {
+    const result = await client
+      .from('titles')
+      .select('*')
+      .order('popularity', { ascending: false })
+      .limit(50);
+    
+    movies = result.data || [];
+    error = result.error;
+  }
 
   if (error) {
     console.error('Error fetching trending movies:', error);

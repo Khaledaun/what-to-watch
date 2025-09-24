@@ -34,3 +34,4 @@ CREATE POLICY "Allow service role to update crawl reports" ON crawl_reports
 CREATE POLICY "Allow service role to delete crawl reports" ON crawl_reports
   FOR DELETE USING (true);
 
+
