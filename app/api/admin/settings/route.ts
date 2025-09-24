@@ -9,10 +9,10 @@ export async function GET(request: NextRequest) {
     const client = db.ensureClient();
     
     if (!client) {
-      // Return mock settings when database is not available
+      // Return environment variables as settings when database is not available
       return NextResponse.json({
         settings: {
-          openaiApiKey: process.env.OPENAI_API_KEY || '',
+          openaiApiKey: process.env.OPENAI_API_KEY || process.env.GROK_API_KEY || '',
           contentGenerationEnabled: process.env.CONTENT_GENERATION_ENABLED === 'true',
           tmdbApiKey: process.env.TMDB_API_KEY || '',
           siteRegionDefault: process.env.NEXT_PUBLIC_SITE_REGION_DEFAULT || 'US',
@@ -22,15 +22,11 @@ export async function GET(request: NextRequest) {
           supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
           siteBrandName: process.env.SITE_BRAND_NAME || 'What to Watch',
           siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-          nextauthSecret: process.env.NEXTAUTH_SECRET || '',
-          nextauthUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000',
-          gaMeasurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || '',
+          nextPublicGaMeasurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || '',
           googleSiteVerification: process.env.GOOGLE_SITE_VERIFICATION || '',
           amazonAssociateTag: process.env.AMAZON_ASSOCIATE_TAG || '',
           cjPublisherId: process.env.CJ_PUBLISHER_ID || '',
           flexoffersApiKey: process.env.FLEXOFFERS_API_KEY || '',
-          sentryDsn: process.env.SENTRY_DSN || '',
-          vercelAnalyticsId: process.env.VERCEL_ANALYTICS_ID || '',
         }
       });
     }

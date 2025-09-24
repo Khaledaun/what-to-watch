@@ -280,7 +280,7 @@ export default function ContentStudioPage() {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* This would be populated with actual topics from the API */}
+                    {/* Mock topics - these would be populated from the API */}
                     <div className="border border-gray-200 rounded-lg p-4">
                       <h3 className="font-medium text-gray-900 mb-2">Top 10 Action Movies on Netflix 2024</h3>
                       <p className="text-sm text-gray-600 mb-3">Movie Lists</p>
