@@ -4,8 +4,6 @@ import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Search, Filter, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface SearchFormProps {
   initialQuery?: string
@@ -40,43 +38,39 @@ export default function SearchForm({ initialQuery = '', initialType = '', initia
         {/* Search Input */}
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
+          <input
             type="text"
             placeholder="Search for movies, TV shows, actors..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder-gray-400 focus:border-purple-500"
+            className="w-full h-10 pl-10 pr-3 py-2 bg-slate-800/50 border border-slate-700 rounded-md text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none"
           />
         </div>
 
         {/* Type Filter */}
-        <Select value={type} onValueChange={setType}>
-          <SelectTrigger className="w-full md:w-40 bg-slate-800/50 border-slate-700 text-white">
-            <Filter className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="All Types" />
-          </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700">
-            <SelectItem value="">All Types</SelectItem>
-            <SelectItem value="movie">Movies</SelectItem>
-            <SelectItem value="tv">TV Shows</SelectItem>
-          </SelectContent>
-        </Select>
+        <select 
+          value={type} 
+          onChange={(e) => setType(e.target.value)}
+          className="w-full md:w-40 h-10 px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-md text-white focus:border-purple-500 focus:outline-none"
+        >
+          <option value="">All Types</option>
+          <option value="movie">Movies</option>
+          <option value="tv">TV Shows</option>
+        </select>
 
         {/* Year Filter */}
-        <Select value={year} onValueChange={setYear}>
-          <SelectTrigger className="w-full md:w-32 bg-slate-800/50 border-slate-700 text-white">
-            <Calendar className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Any Year" />
-          </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
-            <SelectItem value="">Any Year</SelectItem>
-            {years.map((year) => (
-              <SelectItem key={year} value={year.toString()}>
-                {year}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <select 
+          value={year} 
+          onChange={(e) => setYear(e.target.value)}
+          className="w-full md:w-32 h-10 px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-md text-white focus:border-purple-500 focus:outline-none"
+        >
+          <option value="">Any Year</option>
+          {years.map((year) => (
+            <option key={year} value={year.toString()}>
+              {year}
+            </option>
+          ))}
+        </select>
 
         {/* Search Button */}
         <Button 

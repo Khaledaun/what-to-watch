@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import { generateFAQStructuredData } from '@/lib/seo'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 
 export const metadata: Metadata = {
   title: 'Frequently Asked Questions - What to Watch',
@@ -92,23 +91,23 @@ export default function FAQPage() {
           </div>
 
           {/* FAQ Accordion */}
-          <div className="max-w-4xl mx-auto">
-            <Accordion type="single" collapsible className="space-y-4">
-              {faqs.map((faq, index) => (
-                <AccordionItem 
-                  key={index} 
-                  value={`item-${index}`}
-                  className="bg-slate-800/50 border border-slate-700 rounded-lg"
-                >
-                  <AccordionTrigger className="px-6 py-4 text-left text-white hover:text-purple-300">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-4 text-gray-300 leading-relaxed">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+          <div className="max-w-4xl mx-auto space-y-4">
+            {faqs.map((faq, index) => (
+              <details 
+                key={index} 
+                className="bg-slate-800/50 border border-slate-700 rounded-lg group"
+              >
+                <summary className="px-6 py-4 text-left text-white hover:text-purple-300 cursor-pointer list-none">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">{faq.question}</span>
+                    <span className="text-purple-300 group-open:rotate-180 transition-transform">▼</span>
+                  </div>
+                </summary>
+                <div className="px-6 pb-4 text-gray-300 leading-relaxed">
+                  {faq.answer}
+                </div>
+              </details>
+            ))}
           </div>
 
           {/* Additional Help */}

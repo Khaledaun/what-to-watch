@@ -7,9 +7,9 @@ export default function CoreWebVitals() {
     // Only run in production and if gtag is available
     if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined' && window.gtag) {
       // Import web-vitals dynamically
-      import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB, getINP }) => {
+      import('web-vitals').then(({ onCLS, onFCP, onLCP, onTTFB, onINP }) => {
         // Core Web Vitals
-        getCLS((metric) => {
+        onCLS((metric) => {
           window.gtag('event', metric.name, {
             event_category: 'Web Vitals',
             event_label: metric.id,
@@ -18,35 +18,7 @@ export default function CoreWebVitals() {
           })
         })
 
-        getFID((metric) => {
-          window.gtag('event', metric.name, {
-            event_category: 'Web Vitals',
-            event_label: metric.id,
-            value: Math.round(metric.value),
-            non_interaction: true,
-          })
-        })
-
-        getLCP((metric) => {
-          window.gtag('event', metric.name, {
-            event_category: 'Web Vitals',
-            event_label: metric.id,
-            value: Math.round(metric.value),
-            non_interaction: true,
-          })
-        })
-
-        // Additional metrics
-        getFCP((metric) => {
-          window.gtag('event', metric.name, {
-            event_category: 'Web Vitals',
-            event_label: metric.id,
-            value: Math.round(metric.value),
-            non_interaction: true,
-          })
-        })
-
-        getTTFB((metric) => {
+        onLCP((metric) => {
           window.gtag('event', metric.name, {
             event_category: 'Web Vitals',
             event_label: metric.id,
@@ -56,16 +28,33 @@ export default function CoreWebVitals() {
         })
 
         // Interaction to Next Paint (replaces FID)
-        if (getINP) {
-          getINP((metric) => {
-            window.gtag('event', metric.name, {
-              event_category: 'Web Vitals',
-              event_label: metric.id,
-              value: Math.round(metric.value),
-              non_interaction: true,
-            })
+        onINP((metric) => {
+          window.gtag('event', metric.name, {
+            event_category: 'Web Vitals',
+            event_label: metric.id,
+            value: Math.round(metric.value),
+            non_interaction: true,
           })
-        }
+        })
+
+        // Additional metrics
+        onFCP((metric) => {
+          window.gtag('event', metric.name, {
+            event_category: 'Web Vitals',
+            event_label: metric.id,
+            value: Math.round(metric.value),
+            non_interaction: true,
+          })
+        })
+
+        onTTFB((metric) => {
+          window.gtag('event', metric.name, {
+            event_category: 'Web Vitals',
+            event_label: metric.id,
+            value: Math.round(metric.value),
+            non_interaction: true,
+          })
+        })
       }).catch((error) => {
         console.warn('Failed to load web-vitals:', error)
       })
@@ -78,10 +67,6 @@ export default function CoreWebVitals() {
 // Extend Window interface for gtag
 declare global {
   interface Window {
-    gtag: (
-      command: 'config' | 'event' | 'js',
-      targetId: string,
-      config?: Record<string, any>
-    ) => void
+    gtag: (...args: any[]) => void
   }
 }

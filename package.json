@@ -13,6 +13,8 @@
     "lighthouse": "lighthouse http://localhost:3000 --output=html --output-path=./lighthouse-report.html"
   },
   "dependencies": {
+    "@radix-ui/react-accordion": "^1.2.12",
+    "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.3",
     "@supabase/supabase-js": "^2.57.4",
     "@types/node": "^20",
@@ -39,6 +41,7 @@
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5",
+    "web-vitals": "^5.1.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
