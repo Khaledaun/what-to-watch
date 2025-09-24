@@ -1,7 +1,6 @@
 "use client";
 // import { motion } from "framer-motion";
 // import { cardHover } from "@/lib/motion";
-import Image from "next/image";
 import { ProviderIcons } from "./ProviderIcons";
 
 type Rec = {
@@ -26,19 +25,24 @@ export default function ResultCard({ item }: { item: Rec }) {
   return (
     <article className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-lg">
       <div className="relative aspect-[2/3] overflow-hidden">
-        <Image
-          src={item.posterUrl ?? "/placeholder.svg"}
+        <img
+          src={item.posterUrl ?? "/images/fallback/poster.svg"}
           alt={`${item.title} poster`}
-          fill
-          sizes="(min-width: 1024px) 360px, 100vw"
-          className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
-          onError={(e) => {
-            // Fallback to placeholder if image fails to load
-            const target = e.target as HTMLImageElement;
-            target.src = "/placeholder.svg";
+          className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block'
           }}
-          placeholder="blur"
-          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+          onError={(e) => {
+            console.log('ResultCard image failed to load:', item.posterUrl)
+            const target = e.target as HTMLImageElement;
+            target.src = "/images/fallback/poster.svg";
+          }}
+          onLoad={() => {
+            console.log('ResultCard image loaded successfully:', item.posterUrl)
+          }}
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
         <div className="absolute top-3 left-3 flex gap-2">
