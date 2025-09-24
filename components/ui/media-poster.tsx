@@ -36,6 +36,11 @@ export function MediaPoster({
     }
   }, [src])
   
+  // Debug the component state
+  React.useEffect(() => {
+    console.log('MediaPoster state:', { src, error, loading, useFallback })
+  }, [src, error, loading, useFallback])
+  
   // Generate initials from title for placeholder
   const getInitials = (title: string) => {
     return title
@@ -99,6 +104,13 @@ export function MediaPoster({
           onLoad={handleLoad}
           loading={priority ? 'eager' : 'lazy'}
         />
+      )}
+      
+      {/* Debug overlay */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="absolute top-1 left-1 bg-black/70 text-white text-xs p-1 rounded">
+          {src ? 'HAS SRC' : 'NO SRC'} | {loading ? 'LOADING' : 'LOADED'} | {error ? 'ERROR' : 'OK'}
+        </div>
       )}
       
       {/* Fallback regular img tag */}
