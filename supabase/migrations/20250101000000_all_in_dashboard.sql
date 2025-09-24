@@ -3,16 +3,50 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS "pg_trgm" SCHEMA extensions;
 
 -- Create enums
-CREATE TYPE title_type AS ENUM ('movie', 'tv');
-CREATE TYPE content_kind AS ENUM ('article', 'top', 'comparison', 'howto', 'news_digest');
-CREATE TYPE content_status AS ENUM ('draft', 'scheduled', 'published', 'archived');
-CREATE TYPE job_status AS ENUM ('queued', 'running', 'done', 'failed');
-CREATE TYPE admin_role AS ENUM ('owner', 'editor', 'analyst');
-CREATE TYPE news_status AS ENUM ('queued', 'approved', 'rejected');
-CREATE TYPE source_type AS ENUM ('rss', 'manual');
+DO $$ BEGIN
+    CREATE TYPE title_type AS ENUM ('movie', 'tv');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE content_kind AS ENUM ('article', 'top', 'comparison', 'howto', 'news_digest');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE content_status AS ENUM ('draft', 'scheduled', 'published', 'archived');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE job_status AS ENUM ('queued', 'running', 'done', 'failed');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE admin_role AS ENUM ('owner', 'editor', 'analyst');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE news_status AS ENUM ('queued', 'approved', 'rejected');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE source_type AS ENUM ('rss', 'manual');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Core content & TMDB tables
-CREATE TABLE titles (
+CREATE TABLE IF NOT EXISTS titles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tmdb_id INTEGER UNIQUE NOT NULL,
     type title_type NOT NULL,
@@ -36,12 +70,14 @@ CREATE TABLE titles (
     genres INTEGER[], -- TMDB genre IDs
     production_countries TEXT[], -- ISO country codes
     spoken_languages TEXT[], -- ISO language codes
+    poster_path TEXT, -- TMDB poster path
+    backdrop_path TEXT, -- TMDB backdrop path
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     last_verified_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE external_ids (
+CREATE TABLE IF NOT EXISTS external_ids (
     title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
     imdb_id TEXT,
     tvdb_id INTEGER,
@@ -51,7 +87,7 @@ CREATE TABLE external_ids (
     PRIMARY KEY (title_id)
 );
 
-CREATE TABLE people (
+CREATE TABLE IF NOT EXISTS people (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tmdb_id INTEGER UNIQUE NOT NULL,
     name TEXT NOT NULL,
@@ -67,7 +103,7 @@ CREATE TABLE people (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE credits_people (
+CREATE TABLE IF NOT EXISTS credits_people (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
     person_id UUID REFERENCES people(id) ON DELETE CASCADE,
@@ -78,7 +114,7 @@ CREATE TABLE credits_people (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE images (
+CREATE TABLE IF NOT EXISTS images (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
     file_path TEXT NOT NULL,
@@ -91,7 +127,7 @@ CREATE TABLE images (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE videos (
+CREATE TABLE IF NOT EXISTS videos (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
     key TEXT NOT NULL, -- YouTube key, etc.
@@ -104,20 +140,20 @@ CREATE TABLE videos (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE keywords (
+CREATE TABLE IF NOT EXISTS keywords (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tmdb_id INTEGER UNIQUE NOT NULL,
     name TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE title_keywords (
+CREATE TABLE IF NOT EXISTS title_keywords (
     title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
     keyword_id UUID REFERENCES keywords(id) ON DELETE CASCADE,
     PRIMARY KEY (title_id, keyword_id)
 );
 
-CREATE TABLE watch_providers (
+CREATE TABLE IF NOT EXISTS watch_providers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
     country TEXT NOT NULL, -- ISO country code
@@ -129,7 +165,7 @@ CREATE TABLE watch_providers (
     UNIQUE (title_id, country)
 );
 
-CREATE TABLE raw_snapshots (
+CREATE TABLE IF NOT EXISTS raw_snapshots (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
     endpoint TEXT NOT NULL,
@@ -138,7 +174,7 @@ CREATE TABLE raw_snapshots (
     hash TEXT NOT NULL -- for deduplication
 );
 
-CREATE TABLE factsheets (
+CREATE TABLE IF NOT EXISTS factsheets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
     curated_data JSONB NOT NULL, -- AI/page-ready curated data
@@ -150,7 +186,7 @@ CREATE TABLE factsheets (
 );
 
 -- Content system
-CREATE TABLE content_templates (
+CREATE TABLE IF NOT EXISTS content_templates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     kind content_kind NOT NULL,
     name TEXT NOT NULL,
@@ -161,7 +197,7 @@ CREATE TABLE content_templates (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE content_items (
+CREATE TABLE IF NOT EXISTS content_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     kind content_kind NOT NULL,
     title_id UUID REFERENCES titles(id) ON DELETE SET NULL,
@@ -180,7 +216,7 @@ CREATE TABLE content_items (
     UNIQUE (slug, country, language)
 );
 
-CREATE TABLE content_runs (
+CREATE TABLE IF NOT EXISTS content_runs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     trigger TEXT NOT NULL, -- cron, manual
     run_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -191,7 +227,7 @@ CREATE TABLE content_runs (
 );
 
 -- News for SEO
-CREATE TABLE news_feeds (
+CREATE TABLE IF NOT EXISTS news_feeds (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     source_type source_type NOT NULL,
@@ -202,7 +238,7 @@ CREATE TABLE news_feeds (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE news_articles (
+CREATE TABLE IF NOT EXISTS news_articles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     source TEXT NOT NULL,
     url TEXT NOT NULL,
@@ -219,7 +255,7 @@ CREATE TABLE news_articles (
 );
 
 -- Affiliate prep
-CREATE TABLE affiliate_providers (
+CREATE TABLE IF NOT EXISTS affiliate_providers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT UNIQUE NOT NULL,
     active BOOLEAN DEFAULT true,
@@ -229,7 +265,7 @@ CREATE TABLE affiliate_providers (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE affiliates (
+CREATE TABLE IF NOT EXISTS affiliates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
     country TEXT NOT NULL,
@@ -244,7 +280,7 @@ CREATE TABLE affiliates (
 );
 
 -- Admin, jobs, settings
-CREATE TABLE admin_users (
+CREATE TABLE IF NOT EXISTS admin_users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email TEXT UNIQUE NOT NULL,
     role admin_role NOT NULL DEFAULT 'analyst',
@@ -253,7 +289,7 @@ CREATE TABLE admin_users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE jobs (
+CREATE TABLE IF NOT EXISTS jobs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     type TEXT NOT NULL,
     payload JSONB,
@@ -268,7 +304,7 @@ CREATE TABLE jobs (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE job_logs (
+CREATE TABLE IF NOT EXISTS job_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
     ts TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -277,13 +313,13 @@ CREATE TABLE job_logs (
     data JSONB
 );
 
-CREATE TABLE settings (
+CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY,
     value JSONB NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     actor_email TEXT NOT NULL,
     action TEXT NOT NULL,
@@ -294,34 +330,34 @@ CREATE TABLE audit_logs (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_titles_type_year ON titles(type, EXTRACT(YEAR FROM COALESCE(release_date, first_air_date)));
-CREATE INDEX idx_titles_slug ON titles(slug);
-CREATE INDEX idx_titles_tmdb_id ON titles(tmdb_id);
-CREATE INDEX idx_titles_popularity ON titles(popularity DESC);
-CREATE INDEX idx_titles_vote_average ON titles(vote_average DESC);
+CREATE INDEX IF NOT EXISTS idx_titles_type_year ON titles(type, EXTRACT(YEAR FROM COALESCE(release_date, first_air_date)));
+CREATE INDEX IF NOT EXISTS idx_titles_slug ON titles(slug);
+CREATE INDEX IF NOT EXISTS idx_titles_tmdb_id ON titles(tmdb_id);
+CREATE INDEX IF NOT EXISTS idx_titles_popularity ON titles(popularity DESC);
+CREATE INDEX IF NOT EXISTS idx_titles_vote_average ON titles(vote_average DESC);
 
 -- idx_watch_providers_title_country is redundant with UNIQUE constraint
-CREATE INDEX idx_watch_providers_country ON watch_providers(country);
+CREATE INDEX IF NOT EXISTS idx_watch_providers_country ON watch_providers(country);
 
-CREATE INDEX idx_news_articles_published_at ON news_articles(published_at DESC);
-CREATE INDEX idx_news_articles_status ON news_articles(status);
-CREATE INDEX idx_news_articles_entities ON news_articles USING GIN(entities);
-CREATE INDEX idx_news_articles_keywords ON news_articles USING GIN(keywords);
+CREATE INDEX IF NOT EXISTS idx_news_articles_published_at ON news_articles(published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_news_articles_status ON news_articles(status);
+CREATE INDEX IF NOT EXISTS idx_news_articles_entities ON news_articles USING GIN(entities);
+CREATE INDEX IF NOT EXISTS idx_news_articles_keywords ON news_articles USING GIN(keywords);
 
-CREATE INDEX idx_affiliates_country_provider ON affiliates(country, provider);
-CREATE INDEX idx_affiliates_title_country ON affiliates(title_id, country);
+CREATE INDEX IF NOT EXISTS idx_affiliates_country_provider ON affiliates(country, provider);
+CREATE INDEX IF NOT EXISTS idx_affiliates_title_country ON affiliates(title_id, country);
 
-CREATE INDEX idx_jobs_status ON jobs(status);
-CREATE INDEX idx_jobs_scheduled_for ON jobs(scheduled_for);
-CREATE INDEX idx_jobs_type ON jobs(type);
+CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
+CREATE INDEX IF NOT EXISTS idx_jobs_scheduled_for ON jobs(scheduled_for);
+CREATE INDEX IF NOT EXISTS idx_jobs_type ON jobs(type);
 
-CREATE INDEX idx_content_items_status ON content_items(status);
-CREATE INDEX idx_content_items_scheduled_for ON content_items(scheduled_for);
-CREATE INDEX idx_content_items_published_at ON content_items(published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_content_items_status ON content_items(status);
+CREATE INDEX IF NOT EXISTS idx_content_items_scheduled_for ON content_items(scheduled_for);
+CREATE INDEX IF NOT EXISTS idx_content_items_published_at ON content_items(published_at DESC);
 
-CREATE INDEX idx_audit_logs_actor ON audit_logs(actor_email);
-CREATE INDEX idx_audit_logs_entity ON audit_logs(entity, entity_id);
-CREATE INDEX idx_audit_logs_ts ON audit_logs(ts DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON audit_logs(actor_email);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_ts ON audit_logs(ts DESC);
 
 -- RLS Policies
 ALTER TABLE titles ENABLE ROW LEVEL SECURITY;
@@ -330,34 +366,43 @@ ALTER TABLE content_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE news_articles ENABLE ROW LEVEL SECURITY;
 
 -- Public read access for titles (limited fields)
+DROP POLICY IF EXISTS "Public can read titles" ON titles;
 CREATE POLICY "Public can read titles" ON titles
     FOR SELECT USING (true);
 
 -- Public read access for factsheets
+DROP POLICY IF EXISTS "Public can read factsheets" ON factsheets;
 CREATE POLICY "Public can read factsheets" ON factsheets
     FOR SELECT USING (true);
 
 -- Public read access for published content
+DROP POLICY IF EXISTS "Public can read published content" ON content_items;
 CREATE POLICY "Public can read published content" ON content_items
     FOR SELECT USING (status = 'published');
 
 -- Public read access for approved news
+DROP POLICY IF EXISTS "Public can read approved news" ON news_articles;
 CREATE POLICY "Public can read approved news" ON news_articles
     FOR SELECT USING (status = 'approved');
 
 -- Admin-only policies for all other tables
+DROP POLICY IF EXISTS "Admin only access" ON admin_users;
 CREATE POLICY "Admin only access" ON admin_users
     FOR ALL USING (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Admin only access" ON jobs;
 CREATE POLICY "Admin only access" ON jobs
     FOR ALL USING (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Admin only access" ON job_logs;
 CREATE POLICY "Admin only access" ON job_logs
     FOR ALL USING (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Admin only access" ON settings;
 CREATE POLICY "Admin only access" ON settings
     FOR ALL USING (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Admin only access" ON audit_logs;
 CREATE POLICY "Admin only access" ON audit_logs
     FOR ALL USING (auth.role() = 'service_role');
 
@@ -369,14 +414,16 @@ INSERT INTO settings (key, value) VALUES
 ('content_schedule', '{"days": ["tuesday", "friday"], "time": "09:00", "timezone": "America/New_York"}'),
 ('site_brand_name', '"YallaCinema"'),
 ('seo_defaults', '{"meta_suffix": " | YallaCinema", "robots": "index, follow"}'),
-('affiliate_disclosure', '"Some links may earn us a commission at no cost to you."');
+('affiliate_disclosure', '"Some links may earn us a commission at no cost to you."')
+ON CONFLICT (key) DO NOTHING;
 
 -- Insert default content templates
 INSERT INTO content_templates (kind, name, template_md, template_blocks) VALUES
 ('top', 'Top 10 Movies', '# Top 10 {{genre}} Movies to Watch {{country}}\n\n{{#each movies}}\n## {{@index}}. {{title}} ({{year}})\n{{overview}}\n\n**Where to watch:** {{providers}}\n\n{{/each}}', '{}'),
 ('top', 'Top 10 TV Shows', '# Top 10 {{genre}} TV Shows to Watch {{country}}\n\n{{#each shows}}\n## {{@index}}. {{title}} ({{year}})\n{{overview}}\n\n**Where to watch:** {{providers}}\n\n{{/each}}', '{}'),
 ('howto', 'How to Watch', '# How to Watch {{title}} ({{year}})\n\n{{overview}}\n\n## Where to Stream {{title}}\n\n{{#each providers}}\n- **{{name}}**: {{url}}\n{{/each}}\n\n## Cast & Crew\n\n{{#each cast}}\n- **{{name}}** as {{character}}\n{{/each}}', '{}'),
-('comparison', 'Movie Comparison', '# {{title1}} vs {{title2}}: Which Should You Watch?\n\n## {{title1}} ({{year1}})\n{{overview1}}\n\n## {{title2}} ({{year2}})\n{{overview2}}\n\n## Verdict\n\n{{comparison}}', '{}');
+('comparison', 'Movie Comparison', '# {{title1}} vs {{title2}}: Which Should You Watch?\n\n## {{title1}} ({{year1}})\n{{overview1}}\n\n## {{title2}} ({{year2}})\n{{overview2}}\n\n## Verdict\n\n{{comparison}}', '{}')
+ON CONFLICT (kind, name) DO NOTHING;
 
 -- Insert default affiliate providers
 INSERT INTO affiliate_providers (name, active, resolver_strategy, notes) VALUES
@@ -387,7 +434,8 @@ INSERT INTO affiliate_providers (name, active, resolver_strategy, notes) VALUES
 ('Max', true, 'direct', 'Direct streaming service'),
 ('Apple TV+', true, 'direct', 'Direct streaming service'),
 ('Paramount+', true, 'direct', 'Direct streaming service'),
-('Peacock', true, 'direct', 'Direct streaming service');
+('Peacock', true, 'direct', 'Direct streaming service')
+ON CONFLICT (name) DO NOTHING;
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -399,14 +447,35 @@ END;
 $$ language 'plpgsql';
 
 -- Add updated_at triggers
+DROP TRIGGER IF EXISTS update_titles_updated_at ON titles;
 CREATE TRIGGER update_titles_updated_at BEFORE UPDATE ON titles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_people_updated_at ON people;
 CREATE TRIGGER update_people_updated_at BEFORE UPDATE ON people FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_factsheets_updated_at ON factsheets;
 CREATE TRIGGER update_factsheets_updated_at BEFORE UPDATE ON factsheets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_content_templates_updated_at ON content_templates;
 CREATE TRIGGER update_content_templates_updated_at BEFORE UPDATE ON content_templates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_content_items_updated_at ON content_items;
 CREATE TRIGGER update_content_items_updated_at BEFORE UPDATE ON content_items FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_news_feeds_updated_at ON news_feeds;
 CREATE TRIGGER update_news_feeds_updated_at BEFORE UPDATE ON news_feeds FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_affiliate_providers_updated_at ON affiliate_providers;
 CREATE TRIGGER update_affiliate_providers_updated_at BEFORE UPDATE ON affiliate_providers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_affiliates_updated_at ON affiliates;
 CREATE TRIGGER update_affiliates_updated_at BEFORE UPDATE ON affiliates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_admin_users_updated_at ON admin_users;
 CREATE TRIGGER update_admin_users_updated_at BEFORE UPDATE ON admin_users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_jobs_updated_at ON jobs;
 CREATE TRIGGER update_jobs_updated_at BEFORE UPDATE ON jobs FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_settings_updated_at ON settings;
 CREATE TRIGGER update_settings_updated_at BEFORE UPDATE ON settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

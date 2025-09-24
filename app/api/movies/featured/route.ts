@@ -5,7 +5,13 @@ import { db } from '@/lib/database';
 export const dynamic = 'force-dynamic';
 
 // Helper function to get poster path for TMDB ID
-function getPosterPath(tmdbId: number): string {
+function getPosterPath(tmdbId: number, posterPath?: string): string {
+  // If we have a poster path from the database, use it
+  if (posterPath) {
+    return `https://image.tmdb.org/t/p/w500${posterPath}`;
+  }
+  
+  // Fallback to hardcoded map for known movies
   const posterMap: Record<number, string> = {
     278: '/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', // Shawshank Redemption
     238: '/3bhkrj58Vtu7enYsRolD1fZdja1.jpg', // The Godfather
@@ -31,7 +37,13 @@ function getPosterPath(tmdbId: number): string {
     508439: '/f4aul3FyD3jv3v4bul1IrkWZvzq.jpg', // Onward
   };
   
-  return `https://image.tmdb.org/t/p/w500${posterMap[tmdbId] || '/placeholder.svg'}`;
+  // Use hardcoded map if available, otherwise use placeholder
+  if (posterMap[tmdbId]) {
+    return `https://image.tmdb.org/t/p/w500${posterMap[tmdbId]}`;
+  }
+  
+  // Return placeholder as full URL
+  return '/placeholder.svg';
 }
 
 // Helper function to get runtime for TMDB ID
@@ -136,7 +148,8 @@ export async function GET(request: NextRequest) {
         vote_count,
         adult,
         genres,
-        original_language
+        original_language,
+        poster_path
       `)
       .eq('type', 'movie')
       .order('popularity', { ascending: false })
@@ -152,8 +165,8 @@ export async function GET(request: NextRequest) {
 
     // Transform data to match frontend expectations
     const transformedMovies = movies?.map((movie: any) => {
-      // Get actual poster path from TMDB
-      const posterPath = getPosterPath(movie.tmdb_id);
+      // Get actual poster path from TMDB (use database poster_path if available)
+      const posterPath = getPosterPath(movie.tmdb_id, movie.poster_path);
       
       return {
         id: movie.id,
