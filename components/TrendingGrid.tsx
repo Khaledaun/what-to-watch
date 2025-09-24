@@ -1,4 +1,6 @@
-import { db } from '@/lib/database'
+'use client'
+
+import { useState, useEffect } from 'react'
 import { MovieCard } from '@/components/MovieCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -7,41 +9,43 @@ interface TrendingGridProps {
   showHeader?: boolean
 }
 
-export async function TrendingGrid({ limit = 10, showHeader = true }: TrendingGridProps) {
-  let movies: any[] = []
-  let error: string | null = null
+export function TrendingGrid({ limit = 10, showHeader = true }: TrendingGridProps) {
+  const [movies, setMovies] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  try {
-    const client = db.ensureClient()
-    if (client) {
-      const { data, error: dbError } = await client
-        .from('titles')
-        .select('*')
-        .order('popularity', { ascending: false })
-        .limit(limit)
-      
-      if (dbError) {
-        console.error('Database error in TrendingGrid:', dbError)
-        error = 'Failed to load trending movies'
-        // Use fallback data when database fails
-        movies = getFallbackMovies(limit)
-      } else {
-        movies = data || []
-        // If no data from database, use fallback
-        if (movies.length === 0) {
-          movies = getFallbackMovies(limit)
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        // Try to fetch from API first
+        const response = await fetch('/api/movies/trending?limit=' + limit)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.movies && data.movies.length > 0) {
+            setMovies(data.movies)
+            setLoading(false)
+            return
+          }
         }
+        
+        // If API fails or returns no data, use fallback
+        console.log('API failed, using fallback data')
+        setMovies(getFallbackMovies(limit))
+      } catch (err) {
+        console.error('Error fetching trending movies:', err)
+        setError('Failed to load trending movies')
+        // Use fallback data on error
+        setMovies(getFallbackMovies(limit))
+      } finally {
+        setLoading(false)
       }
-    } else {
-      // Fallback data when database is not available
-      movies = getFallbackMovies(limit)
     }
-  } catch (err) {
-    error = 'Failed to load trending movies'
-    console.error('TrendingGrid error:', err)
-    // Use fallback data when any error occurs
-    movies = getFallbackMovies(limit)
-  }
+
+    fetchMovies()
+  }, [limit])
 
   // Helper function for fallback movies
   function getFallbackMovies(limit: number) {
@@ -98,6 +102,39 @@ export async function TrendingGrid({ limit = 10, showHeader = true }: TrendingGr
         }
       ].slice(0, limit)
     }
+
+  if (loading) {
+    return (
+      <section className="py-12 md:py-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="space-y-6 md:space-y-8">
+            {showHeader && (
+              <div className="text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                  Trending now
+                </h2>
+                <p className="text-muted-foreground mt-2">
+                  What everyone's watching right now
+                </p>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
+              {Array.from({ length: limit }).map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="aspect-[2/3] bg-gray-700 rounded-lg"></div>
+                  <div className="mt-2 space-y-2">
+                    <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-700 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   if (error && movies.length === 0) {
     return (

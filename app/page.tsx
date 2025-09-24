@@ -13,7 +13,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SkipLink } from "@/components/Accessibility";
 import LatestArticles from "@/components/LatestArticles";
 import Backlinks from "@/components/Backlinks";
-import ContentDiscovery from "@/components/ContentDiscovery";
+// import ContentDiscovery from "@/components/ContentDiscovery"; // Removed to fix loading issues
 import { generateWebSiteLD, generateSoftwareApplicationLD, generateFAQPageLD } from "@/lib/structured-data";
 
 const MOCK = [
@@ -281,10 +281,10 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Content Discovery Section */}
-        <section className="py-16">
+        {/* Content Discovery Section - Removed to fix loading issues */}
+        {/* <section className="py-16">
           <ContentDiscovery />
-        </section>
+        </section> */}
 
         {/* Latest Articles Section */}
         <section className="py-16">

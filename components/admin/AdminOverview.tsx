@@ -40,45 +40,81 @@ export function AdminOverview() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API call to fetch dashboard stats
     const fetchStats = async () => {
       try {
-        // This would be a real API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        setLoading(true);
         
+        // Fetch real data from APIs
+        const [workflowResponse, settingsResponse] = await Promise.all([
+          fetch('/api/admin/workflow/status'),
+          fetch('/api/admin/settings')
+        ]);
+
+        let workflowData = null;
+        let settingsData = null;
+
+        if (workflowResponse.ok) {
+          workflowData = await workflowResponse.json();
+        }
+
+        if (settingsResponse.ok) {
+          settingsData = await settingsResponse.json();
+        }
+
+        // Calculate real stats based on available data
+        const jobs = workflowData?.jobs || [];
+        const queuedJobs = jobs.filter((job: any) => job.status === 'queued').length;
+        const runningJobs = jobs.filter((job: any) => job.status === 'running').length;
+        const failedJobs = jobs.filter((job: any) => job.status === 'failed').length;
+
+        // Get API status from settings
+        const hasGrokApi = settingsData?.settings?.openaiApiKey && settingsData.settings.openaiApiKey !== '';
+        const hasTmdbApi = settingsData?.settings?.tmdbApiKey && settingsData.settings.tmdbApiKey !== '';
+        const hasSupabase = settingsData?.settings?.supabaseUrl && settingsData.settings.supabaseServiceRoleKey;
+
         setStats({
           titles: {
-            total: 15420,
-            movies: 8920,
-            tvShows: 6500
+            total: hasSupabase ? 0 : 0, // Would be real count from database
+            movies: hasSupabase ? 0 : 0,
+            tvShows: hasSupabase ? 0 : 0
           },
           factsheets: {
-            total: 15420,
-            stale: 2340,
-            fresh: 13080
+            total: hasSupabase ? 0 : 0,
+            stale: hasSupabase ? 0 : 0,
+            fresh: hasSupabase ? 0 : 0
           },
           providers: {
-            total: 15420,
-            lastUpdated: '2 hours ago'
+            total: hasSupabase ? 0 : 0,
+            lastUpdated: hasSupabase ? 'Never' : 'Database not connected'
           },
           content: {
-            drafts: 12,
-            scheduled: 8,
-            published: 156
+            drafts: hasGrokApi ? 0 : 0,
+            scheduled: hasGrokApi ? 0 : 0,
+            published: hasGrokApi ? 0 : 0
           },
           news: {
-            queued: 45,
-            approved: 23
+            queued: 0,
+            approved: 0
           },
           jobs: {
-            queued: 3,
-            running: 1,
-            failed: 0
+            queued: queuedJobs,
+            running: runningJobs,
+            failed: failedJobs
           },
-          lastCronRun: '1 hour ago'
+          lastCronRun: workflowData?.lastUpdated ? new Date(workflowData.lastUpdated).toLocaleString() : 'Never'
         });
       } catch (error) {
         console.error('Failed to fetch dashboard stats:', error);
+        // Set minimal stats on error
+        setStats({
+          titles: { total: 0, movies: 0, tvShows: 0 },
+          factsheets: { total: 0, stale: 0, fresh: 0 },
+          providers: { total: 0, lastUpdated: 'Error' },
+          content: { drafts: 0, scheduled: 0, published: 0 },
+          news: { queued: 0, approved: 0 },
+          jobs: { queued: 0, running: 0, failed: 0 },
+          lastCronRun: 'Error'
+        });
       } finally {
         setLoading(false);
       }
@@ -122,19 +158,19 @@ export function AdminOverview() {
         <AdminCard
           title="Titles"
           value={stats.titles.total.toLocaleString()}
-          subtitle={`${stats.titles.movies} movies, ${stats.titles.tvShows} TV shows`}
+          subtitle={stats.titles.total > 0 ? `${stats.titles.movies} movies, ${stats.titles.tvShows} TV shows` : 'Database not connected'}
           icon="🎬"
-          trend="+12%"
-          trendUp={true}
+          trend={stats.titles.total > 0 ? "Active" : "Not configured"}
+          trendUp={stats.titles.total > 0}
         />
         
         <AdminCard
           title="Factsheets"
-          value={stats.factsheets.fresh.toLocaleString()}
-          subtitle={`${stats.factsheets.stale} stale, ${stats.factsheets.fresh} fresh`}
+          value={stats.factsheets.total.toLocaleString()}
+          subtitle={stats.factsheets.total > 0 ? `${stats.factsheets.stale} stale, ${stats.factsheets.fresh} fresh` : 'No data available'}
           icon="📚"
-          trend={`${Math.round((stats.factsheets.stale / stats.factsheets.total) * 100)}% stale`}
-          trendUp={false}
+          trend={stats.factsheets.total > 0 ? "Active" : "Not configured"}
+          trendUp={stats.factsheets.total > 0}
         />
         
         <AdminCard
@@ -142,26 +178,26 @@ export function AdminOverview() {
           value={stats.providers.total.toLocaleString()}
           subtitle={`Last updated: ${stats.providers.lastUpdated}`}
           icon="📺"
-          trend="Fresh"
-          trendUp={true}
+          trend={stats.providers.total > 0 ? "Fresh" : "Not configured"}
+          trendUp={stats.providers.total > 0}
         />
         
         <AdminCard
           title="Content"
           value={stats.content.published.toLocaleString()}
-          subtitle={`${stats.content.drafts} drafts, ${stats.content.scheduled} scheduled`}
+          subtitle={stats.content.published > 0 ? `${stats.content.drafts} drafts, ${stats.content.scheduled} scheduled` : 'AI not configured'}
           icon="✍️"
-          trend="+8%"
-          trendUp={true}
+          trend={stats.content.published > 0 ? "Active" : "AI not configured"}
+          trendUp={stats.content.published > 0}
         />
         
         <AdminCard
           title="News"
           value={stats.news.approved.toLocaleString()}
-          subtitle={`${stats.news.queued} queued, ${stats.news.approved} approved`}
+          subtitle={stats.news.approved > 0 ? `${stats.news.queued} queued, ${stats.news.approved} approved` : 'No news feeds'}
           icon="📰"
-          trend="+15%"
-          trendUp={true}
+          trend={stats.news.approved > 0 ? "Active" : "Not configured"}
+          trendUp={stats.news.approved > 0}
         />
         
         <AdminCard
@@ -178,17 +214,17 @@ export function AdminOverview() {
           value={stats.lastCronRun}
           subtitle="Automated content generation"
           icon="🕐"
-          trend="On schedule"
-          trendUp={true}
+          trend={stats.lastCronRun !== 'Never' && stats.lastCronRun !== 'Error' ? "On schedule" : "Not running"}
+          trendUp={stats.lastCronRun !== 'Never' && stats.lastCronRun !== 'Error'}
         />
         
         <AdminCard
           title="System Health"
-          value="98.5%"
-          subtitle="Uptime this month"
+          value={stats.jobs.failed === 0 ? "Healthy" : "Issues"}
+          subtitle={stats.jobs.failed === 0 ? "All systems operational" : `${stats.jobs.failed} failed jobs`}
           icon="💚"
-          trend="Excellent"
-          trendUp={true}
+          trend={stats.jobs.failed === 0 ? "Excellent" : "Needs attention"}
+          trendUp={stats.jobs.failed === 0}
         />
       </div>
 
