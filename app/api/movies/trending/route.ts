@@ -23,6 +23,12 @@ export async function GET(request: NextRequest) {
         console.error('Database error:', error);
       } else {
         movies = data || [];
+        // Check if movies have poster_path, if not use fallback
+        const moviesWithoutPosters = movies.filter(movie => !movie.poster_path);
+        if (moviesWithoutPosters.length > 0) {
+          console.log(`Found ${moviesWithoutPosters.length} movies without poster_path, using fallback data`);
+          movies = getFallbackMovies(limit);
+        }
       }
     }
 
