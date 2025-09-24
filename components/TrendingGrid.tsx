@@ -33,7 +33,9 @@ export function TrendingGrid({ limit = 10, showHeader = true }: TrendingGridProp
         
         // If API fails or returns no data, use fallback
         console.log('API failed, using fallback data')
-        setMovies(getFallbackMovies(limit))
+        const fallbackMovies = getFallbackMovies(limit)
+        console.log('Fallback movies:', fallbackMovies)
+        setMovies(fallbackMovies)
       } catch (err) {
         console.error('Error fetching trending movies:', err)
         setError('Failed to load trending movies')
@@ -214,13 +216,16 @@ export function TrendingGrid({ limit = 10, showHeader = true }: TrendingGridProp
           )}
           
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
-            {movies.map((movie, index) => (
-              <MovieCard 
-                key={movie.id} 
-                movie={movie} 
-                priority={index < 5} // Prioritize first 5 images
-              />
-            ))}
+            {movies.map((movie, index) => {
+              console.log(`MovieCard ${index}:`, movie)
+              return (
+                <MovieCard 
+                  key={movie.id} 
+                  movie={movie} 
+                  priority={index < 5} // Prioritize first 5 images
+                />
+              )
+            })}
           </div>
           
           {movies.length === 0 && (
