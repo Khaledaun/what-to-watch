@@ -188,10 +188,11 @@ export function PlatformPage({ platform }: PlatformPageProps) {
       </div>
 
       {/* Answer Box */}
-      <AnswerBox 
-        content={`Discover the best content available on ${PLATFORM_NAMES[platform]} tonight. Our recommendations are tailored to your mood, available time, and viewing preferences.`}
-        className="max-w-4xl mx-auto"
-      />
+      <div className="max-w-4xl mx-auto">
+        <AnswerBox>
+          {`Discover the best content available on ${PLATFORM_NAMES[platform]} tonight. Our recommendations are tailored to your mood, available time, and viewing preferences.`}
+        </AnswerBox>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
         {/* Filters */}
@@ -242,11 +243,7 @@ export function PlatformPage({ platform }: PlatformPageProps) {
                 {visiblePrimary.map(recommendation => (
                   <ResultCard
                     key={recommendation.id}
-                    recommendation={recommendation}
-                    onPlayNow={handlePlayNow}
-                    onTrailer={handleTrailer}
-                    onHide={handleHide}
-                    isHidden={hiddenItems.has(recommendation.id)}
+                    item={recommendation}
                   />
                 ))}
               </div>
@@ -261,11 +258,7 @@ export function PlatformPage({ platform }: PlatformPageProps) {
                 {visibleAlternates.map(recommendation => (
                   <ResultCard
                     key={recommendation.id}
-                    recommendation={recommendation}
-                    onPlayNow={handlePlayNow}
-                    onTrailer={handleTrailer}
-                    onHide={handleHide}
-                    isHidden={hiddenItems.has(recommendation.id)}
+                    item={recommendation}
                   />
                 ))}
               </div>
@@ -276,7 +269,7 @@ export function PlatformPage({ platform }: PlatformPageProps) {
 
       {/* FAQ */}
       <div className="max-w-4xl mx-auto">
-        <FAQ items={FAQ_ITEMS[platform]} />
+        <FAQ />
       </div>
     </div>
   )

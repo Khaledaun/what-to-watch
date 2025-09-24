@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { env, getDefaultCountries } from '@/lib/env'
 import { FilterInput, Recommendation, RecommendationResponse } from '@/lib/types'
-import { SUPPORTED_COUNTRIES, PLATFORMS, MOODS, TIME_BUDGETS, AUDIENCES, CONTENT_TYPES } from '@/lib/constants'
+import { SUPPORTED_COUNTRIES, PLATFORMS, MOODS, TIME_BUDGETS, AUDIENCES, CONTENT_TYPES, Mood } from '@/lib/constants'
 import { getCache, setCache, getRecommendationCacheKey } from '@/lib/cache'
 import { generateTraceId, hashObject } from '@/lib/utils'
 import { getTrendingMovies, getTrendingTVShows, getTopRatedMovies, getTopRatedTVShows, getMovieDetails, getTVShowDetails, getWatchProviders, getPosterUrl, getTrailerUrl, getRuntimeFromDetails, getMaturityRating } from '@/lib/tmdb'
@@ -23,8 +23,83 @@ const filterInputSchema = z.object({
 
 export const runtime = 'edge'
 
+export async function GET(request: NextRequest) {
+  const traceId = generateTraceId()
+  
+  // Check if TMDB_API_KEY is available
+  if (!env.TMDB_API_KEY) {
+    return NextResponse.json({
+      error: 'TMDB API key not configured',
+      message: 'Please configure TMDB_API_KEY environment variable',
+      traceId
+    }, { status: 500 })
+  }
+  
+  try {
+    const { searchParams } = new URL(request.url)
+    
+    // Parse query parameters
+    const filterInput = {
+      countries: searchParams.get('countries')?.split(',') || ['US'],
+      platforms: searchParams.get('platforms')?.split(',') || ['netflix'],
+      moods: searchParams.get('moods')?.split(',') || undefined,
+      timeBudget: searchParams.get('timeBudget') || undefined,
+      audience: searchParams.get('audience') || undefined,
+      type: searchParams.get('type') || 'either',
+      limit: parseInt(searchParams.get('limit') || '3'),
+    } as FilterInput
+    
+    // Validate the input
+    const validatedInput = filterInputSchema.parse(filterInput)
+    
+    // Check cache first
+    const cacheKey = getRecommendationCacheKey(validatedInput)
+    const cached = await getCache<RecommendationResponse>(cacheKey)
+    
+    if (cached) {
+      return NextResponse.json({
+        ...cached,
+        cached: true,
+        traceId,
+      })
+    }
+    
+    // Generate recommendations
+    const recommendations = await generateRecommendations(validatedInput, traceId)
+    
+    // Cache the results
+    const response: RecommendationResponse = {
+      ...recommendations,
+      traceId,
+      cached: false,
+    }
+    
+    await setCache(cacheKey, response, 900) // Cache for 15 minutes
+    
+    return NextResponse.json(response)
+    
+  } catch (error) {
+    console.error('Recommendation API error:', error)
+    
+    return NextResponse.json({
+      error: 'Failed to generate recommendations',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      traceId,
+    }, { status: 500 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   const traceId = generateTraceId()
+  
+  // Check if TMDB_API_KEY is available
+  if (!env.TMDB_API_KEY) {
+    return NextResponse.json({
+      error: 'TMDB API key not configured',
+      message: 'Please configure TMDB_API_KEY environment variable',
+      traceId
+    }, { status: 500 })
+  }
   
   try {
     const body = await request.json()
@@ -80,72 +155,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
-  const traceId = generateTraceId()
-  
-  try {
-    const { searchParams } = new URL(request.url)
-    
-    // Parse query parameters
-    const filterInput = filterInputSchema.parse({
-      countries: searchParams.get('countries')?.split(',') || ['US'],
-      platforms: searchParams.get('platforms')?.split(',') || ['netflix'],
-      moods: searchParams.get('moods')?.split(','),
-      timeBudget: searchParams.get('timeBudget') || undefined,
-      audience: searchParams.get('audience') || undefined,
-      type: searchParams.get('type') || 'either',
-      limit: parseInt(searchParams.get('limit') || '3'),
-    }) as FilterInput
-    
-    // Check cache first
-    const cacheKey = getRecommendationCacheKey(filterInput)
-    const cached = await getCache<RecommendationResponse>(cacheKey)
-    
-    if (cached) {
-      return NextResponse.json({
-        ...cached,
-        cached: true,
-        traceId,
-      })
-    }
-    
-    // Generate recommendations
-    const recommendations = await generateRecommendations(filterInput, traceId)
-    
-    // Cache the results
-    const response: RecommendationResponse = {
-      ...recommendations,
-      traceId,
-      cached: false,
-    }
-    
-    await setCache(cacheKey, response)
-    
-    return NextResponse.json(response)
-    
-  } catch (error) {
-    console.error('Recommendation API error:', error)
-    
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { 
-          error: 'Invalid input', 
-          details: error.errors,
-          traceId 
-        },
-        { status: 400 }
-      )
-    }
-    
-    return NextResponse.json(
-      { 
-        error: 'Internal server error', 
-        traceId 
-      },
-      { status: 500 }
-    )
-  }
-}
 
 async function generateRecommendations(
   filterInput: FilterInput, 
@@ -203,19 +212,22 @@ async function generateRecommendations(
       // Generate mood tags
       const moodTags: string[] = []
       if (filterInput.moods) {
+        const title = 'title' in item ? item.title : item.name
         for (const mood of filterInput.moods) {
-          if (shouldIncludeForMood(mood, item.title || item.name, details.overview || '')) {
+          if (shouldIncludeForMood(mood as Mood, title, details.overview || '')) {
             moodTags.push(mood)
           }
         }
       }
       
       // Create recommendation object
+      const title = 'title' in item ? item.title : item.name
+      const releaseDate = 'release_date' in item ? item.release_date : item.first_air_date
       const recommendation: Recommendation = {
         id: `tmdb:${item.type}:${item.id}`,
-        title: item.title || item.name,
-        year: new Date(item.release_date || item.first_air_date).getFullYear(),
-        type: item.type,
+        title: title,
+        year: new Date(releaseDate).getFullYear(),
+        type: item.type === 'tv' ? 'series' : 'movie',
         posterUrl: getPosterUrl(item.poster_path),
         runtimeMinutes: getRuntimeFromDetails(details, item.type),
         seasonCount: item.type === 'tv' ? details.number_of_seasons : undefined,

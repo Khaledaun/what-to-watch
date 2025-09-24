@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    runtime: 'edge',
-  },
   images: {
     domains: ['image.tmdb.org', 'www.themoviedb.org'],
     formats: ['image/webp', 'image/avif'],

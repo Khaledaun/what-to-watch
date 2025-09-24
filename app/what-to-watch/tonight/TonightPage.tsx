@@ -134,10 +134,11 @@ export function TonightPage() {
       </div>
 
       {/* Answer Box */}
-      <AnswerBox 
-        content="Tonight's recommendations are carefully curated for immediate viewing, considering your streaming platforms, available time, and current mood preferences."
-        className="max-w-4xl mx-auto"
-      />
+      <div className="max-w-4xl mx-auto">
+        <AnswerBox>
+          Tonight's recommendations are carefully curated for immediate viewing, considering your streaming platforms, available time, and current mood preferences.
+        </AnswerBox>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
         {/* Filters */}
@@ -188,11 +189,7 @@ export function TonightPage() {
                 {visiblePrimary.map(recommendation => (
                   <ResultCard
                     key={recommendation.id}
-                    recommendation={recommendation}
-                    onPlayNow={handlePlayNow}
-                    onTrailer={handleTrailer}
-                    onHide={handleHide}
-                    isHidden={hiddenItems.has(recommendation.id)}
+                    item={recommendation}
                   />
                 ))}
               </div>
@@ -207,11 +204,7 @@ export function TonightPage() {
                 {visibleAlternates.map(recommendation => (
                   <ResultCard
                     key={recommendation.id}
-                    recommendation={recommendation}
-                    onPlayNow={handlePlayNow}
-                    onTrailer={handleTrailer}
-                    onHide={handleHide}
-                    isHidden={hiddenItems.has(recommendation.id)}
+                    item={recommendation}
                   />
                 ))}
               </div>
@@ -222,7 +215,7 @@ export function TonightPage() {
 
       {/* FAQ */}
       <div className="max-w-4xl mx-auto">
-        <FAQ items={FAQ_ITEMS} />
+        <FAQ />
       </div>
     </div>
   )

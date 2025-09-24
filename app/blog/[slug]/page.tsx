@@ -10,9 +10,12 @@ interface BlogPostProps {
   params: { slug: string };
 }
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export async function generateStaticParams() {
-  const slugs = getPostSlugs();
-  return slugs.map((slug) => ({ slug }));
+  // Return empty array to disable static generation
+  return [];
 }
 
 export async function generateMetadata({ params }: BlogPostProps): Promise<Metadata> {

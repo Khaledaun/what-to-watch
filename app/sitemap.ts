@@ -1,8 +1,9 @@
 import { MetadataRoute } from 'next'
 import { PLATFORMS, MOODS } from '@/lib/constants'
 import { getAllPosts } from '@/lib/blog'
+import { db } from '@/lib/database'
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://whattowatch.com'
   const currentDate = new Date()
 
@@ -13,6 +14,36 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: currentDate,
       changeFrequency: 'daily',
       priority: 1,
+    },
+    {
+      url: `${baseUrl}/movies`,
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/movies/trending`,
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/movies/top-rated`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/movies/recent`,
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/search`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/what-to-watch/tonight`,
@@ -64,5 +95,40 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }))
 
-  return [...staticRoutes, ...platformRoutes, ...moodRoutes, ...blogRoutes]
+  // Movie routes - fetch from database
+  let movieRoutes: MetadataRoute.Sitemap = []
+  try {
+    const { data: movies } = await db.ensureClient()
+      .from('titles')
+      .select('slug, updated_at')
+      .limit(1000) // Limit to prevent sitemap from being too large
+    
+    movieRoutes = movies?.map(movie => ({
+      url: `${baseUrl}/movie/${movie.slug}`,
+      lastModified: movie.updated_at ? new Date(movie.updated_at) : currentDate,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })) || []
+  } catch (error) {
+    console.error('Error fetching movies for sitemap:', error)
+  }
+
+  // Category routes
+  const categoryRoutes: MetadataRoute.Sitemap = [
+    'action', 'comedy', 'drama', 'romance', 'thriller', 'sci-fi', 'horror', 'family', 'documentary'
+  ].map(category => ({
+    url: `${baseUrl}/movies/${category}`,
+    lastModified: currentDate,
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }))
+
+  return [
+    ...staticRoutes, 
+    ...platformRoutes, 
+    ...moodRoutes, 
+    ...blogRoutes, 
+    ...movieRoutes,
+    ...categoryRoutes
+  ]
 }

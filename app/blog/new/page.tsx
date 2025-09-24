@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { Metadata } from "next";
 import Navigation from "@/components/Navigation";
 
 export default function NewPost() {

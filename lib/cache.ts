@@ -8,39 +8,35 @@ interface CacheEntry<T> {
 // In-memory cache fallback
 const memoryCache = new Map<string, CacheEntry<any>>()
 
-// Redis client (will be initialized if REDIS_URL is provided)
-let redisClient: any = null
+// KV client (will be initialized if REDIS_URL is provided)
+let kvClient: any = null
 
-// Initialize Redis client if available
-async function initRedis() {
-  if (redisClient || !env.REDIS_URL) return
+// Initialize KV client if available
+async function initKV() {
+  if (kvClient || !env.REDIS_URL) return
   
   try {
+    // Only use Vercel KV for Upstash Redis (Edge Runtime compatible)
     if (env.REDIS_URL.includes('upstash') || env.REDIS_URL.includes('vercel')) {
-      // Use Vercel KV for Upstash Redis
       const { kv } = await import('@vercel/kv')
-      redisClient = kv
+      kvClient = kv
     } else {
-      // Use ioredis for regular Redis
-      const Redis = (await import('ioredis')).default
-      redisClient = new Redis(env.REDIS_URL, {
-        retryDelayOnFailover: 100,
-        maxRetriesPerRequest: 3,
-        lazyConnect: true,
-      })
+      // For other Redis URLs, fall back to memory cache in Edge Runtime
+      console.warn('Non-Upstash Redis URL detected, falling back to memory cache for Edge Runtime compatibility')
+      kvClient = null
     }
   } catch (error) {
-    console.warn('Failed to initialize Redis client, falling back to memory cache:', error)
-    redisClient = null
+    console.warn('Failed to initialize KV client, falling back to memory cache:', error)
+    kvClient = null
   }
 }
 
 export async function getCache<T>(key: string): Promise<T | null> {
-  await initRedis()
+  await initKV()
   
   try {
-    if (redisClient) {
-      const value = await redisClient.get(key)
+    if (kvClient) {
+      const value = await kvClient.get(key)
       return value ? JSON.parse(value) : null
     } else {
       // Fallback to memory cache
@@ -61,11 +57,11 @@ export async function getCache<T>(key: string): Promise<T | null> {
 }
 
 export async function setCache<T>(key: string, value: T, ttlSeconds: number = env.CACHE_TTL_SECONDS): Promise<void> {
-  await initRedis()
+  await initKV()
   
   try {
-    if (redisClient) {
-      await redisClient.setex(key, ttlSeconds, JSON.stringify(value))
+    if (kvClient) {
+      await kvClient.setex(key, ttlSeconds, JSON.stringify(value))
     } else {
       // Fallback to memory cache
       const expiresAt = Date.now() + (ttlSeconds * 1000)
@@ -87,11 +83,11 @@ export async function setCache<T>(key: string, value: T, ttlSeconds: number = en
 }
 
 export async function deleteCache(key: string): Promise<void> {
-  await initRedis()
+  await initKV()
   
   try {
-    if (redisClient) {
-      await redisClient.del(key)
+    if (kvClient) {
+      await kvClient.del(key)
     } else {
       memoryCache.delete(key)
     }
@@ -101,11 +97,11 @@ export async function deleteCache(key: string): Promise<void> {
 }
 
 export async function clearCache(): Promise<void> {
-  await initRedis()
+  await initKV()
   
   try {
-    if (redisClient) {
-      await redisClient.flushdb()
+    if (kvClient) {
+      await kvClient.flushdb()
     } else {
       memoryCache.clear()
     }

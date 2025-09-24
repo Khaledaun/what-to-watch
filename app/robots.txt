@@ -1,16 +1,23 @@
 User-agent: *
 Allow: /
 
-# Block API routes
+# Block API routes and internal Next.js files
 Disallow: /api/
-
-# Block admin or private areas (if any)
-Disallow: /admin/
 Disallow: /_next/
+Disallow: /admin/
 Disallow: /private/
 
-# Allow important pages
+# Allow all movie and content pages
+Allow: /movies/
+Allow: /movie/
+Allow: /blog/
 Allow: /what-to-watch/
+
+# Block search result pages with parameters
+Disallow: /search?*
+Disallow: /*?*
+
+# Allow specific important pages
 Allow: /what-to-watch/tonight
 Allow: /what-to-watch/on-*
 Allow: /what-to-watch/by-mood/*
@@ -20,6 +27,19 @@ Allow: /what-to-watch/family-night
 # Sitemap location
 Sitemap: https://whattowatch.com/sitemap.xml
 
-# Crawl delay (optional)
+# Crawl delay for better server performance
+Crawl-delay: 1
+
+# Special instructions for major search engines
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Slurp
+Allow: /
 Crawl-delay: 1
 

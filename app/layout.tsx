@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { generateSoftwareApplicationLD, generateWebSiteLD } from '@/lib/structured-data'
-import { PerformanceMonitor } from '@/components/PerformanceMonitor'
+// import { PerformanceMonitor } from '@/components/PerformanceMonitor'
+import Footer from '@/components/Footer'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -77,12 +78,15 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteLD) }}
         />
       </head>
-      <body className={inter.className}>
-        <PerformanceMonitor />
-        <div className="min-h-screen">
-          {children}
-        </div>
-      </body>
+                  <body className={inter.className}>
+                    {/* <PerformanceMonitor /> */}
+                    <div className="min-h-screen flex flex-col">
+                      <main className="flex-1">
+                        {children}
+                      </main>
+                      <Footer />
+                    </div>
+                  </body>
     </html>
   )
 }

@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/generate-weekly-topics",
+      "schedule": "30 9 * * 0"
+    },
+    {
+      "path": "/api/cron/seo-crawl",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/process-jobs",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

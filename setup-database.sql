@@ -1,0 +1,418 @@
+-- YallaCinema Database Setup Script
+-- Run this in your Supabase SQL Editor
+
+-- Enable necessary extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+
+-- Create enums
+CREATE TYPE title_type AS ENUM ('movie', 'tv');
+CREATE TYPE content_kind AS ENUM ('article', 'top', 'comparison', 'howto', 'news_digest');
+CREATE TYPE content_status AS ENUM ('draft', 'scheduled', 'published', 'archived');
+CREATE TYPE job_status AS ENUM ('queued', 'running', 'done', 'failed');
+CREATE TYPE admin_role AS ENUM ('owner', 'editor', 'analyst');
+CREATE TYPE news_status AS ENUM ('queued', 'approved', 'rejected');
+CREATE TYPE source_type AS ENUM ('rss', 'manual');
+
+-- Core content & TMDB tables
+CREATE TABLE titles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tmdb_id INTEGER UNIQUE NOT NULL,
+    type title_type NOT NULL,
+    slug TEXT NOT NULL,
+    title TEXT NOT NULL,
+    original_title TEXT,
+    overview TEXT,
+    tagline TEXT,
+    runtime INTEGER,
+    episode_count INTEGER,
+    season_count INTEGER,
+    release_date DATE,
+    first_air_date DATE,
+    last_air_date DATE,
+    status TEXT,
+    popularity DECIMAL(10,2),
+    vote_average DECIMAL(3,1),
+    vote_count INTEGER,
+    adult BOOLEAN DEFAULT false,
+    original_language TEXT,
+    genres INTEGER[],
+    production_countries TEXT[],
+    spoken_languages TEXT[],
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_verified_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE external_ids (
+    title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
+    imdb_id TEXT,
+    tvdb_id INTEGER,
+    facebook_id TEXT,
+    instagram_id TEXT,
+    twitter_id TEXT,
+    PRIMARY KEY (title_id)
+);
+
+CREATE TABLE people (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tmdb_id INTEGER UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    also_known_as TEXT[],
+    biography TEXT,
+    birthday DATE,
+    deathday DATE,
+    place_of_birth TEXT,
+    profile_path TEXT,
+    popularity DECIMAL(10,2),
+    adult BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE credits_people (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
+    person_id UUID REFERENCES people(id) ON DELETE CASCADE,
+    character TEXT,
+    job TEXT,
+    department TEXT,
+    order_index INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE images (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
+    file_path TEXT NOT NULL,
+    aspect_ratio DECIMAL(5,2),
+    height INTEGER,
+    width INTEGER,
+    vote_average DECIMAL(3,1),
+    vote_count INTEGER,
+    image_type TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE videos (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
+    key TEXT NOT NULL,
+    name TEXT,
+    site TEXT NOT NULL,
+    size INTEGER,
+    type TEXT NOT NULL,
+    official BOOLEAN DEFAULT false,
+    published_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE keywords (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tmdb_id INTEGER UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE title_keywords (
+    title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
+    keyword_id UUID REFERENCES keywords(id) ON DELETE CASCADE,
+    PRIMARY KEY (title_id, keyword_id)
+);
+
+CREATE TABLE watch_providers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
+    country TEXT NOT NULL,
+    flatrate JSONB,
+    rent JSONB,
+    buy JSONB,
+    link TEXT,
+    fetched_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE (title_id, country)
+);
+
+CREATE TABLE raw_snapshots (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL,
+    payload JSONB NOT NULL,
+    fetched_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    hash TEXT NOT NULL
+);
+
+CREATE TABLE factsheets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
+    curated_data JSONB NOT NULL,
+    locked_fields JSONB DEFAULT '{}',
+    last_verified_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE (title_id)
+);
+
+-- Content system
+CREATE TABLE content_templates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    kind content_kind NOT NULL,
+    name TEXT NOT NULL,
+    template_md TEXT,
+    template_blocks JSONB,
+    active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE content_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    kind content_kind NOT NULL,
+    title_id UUID REFERENCES titles(id) ON DELETE SET NULL,
+    slug TEXT NOT NULL,
+    country TEXT NOT NULL DEFAULT 'US',
+    language TEXT NOT NULL DEFAULT 'en-US',
+    status content_status NOT NULL DEFAULT 'draft',
+    scheduled_for TIMESTAMP WITH TIME ZONE,
+    published_at TIMESTAMP WITH TIME ZONE,
+    seo_jsonld JSONB,
+    body_md TEXT,
+    created_by TEXT NOT NULL,
+    updated_by TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE (slug, country, language)
+);
+
+CREATE TABLE content_runs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    trigger TEXT NOT NULL,
+    run_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    status TEXT NOT NULL,
+    metrics JSONB,
+    initiated_by TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- News for SEO
+CREATE TABLE news_feeds (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    source_type source_type NOT NULL,
+    url TEXT,
+    country TEXT,
+    active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE news_articles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    source TEXT NOT NULL,
+    url TEXT NOT NULL,
+    title TEXT NOT NULL,
+    summary TEXT,
+    published_at TIMESTAMP WITH TIME ZONE,
+    country TEXT NOT NULL,
+    entities JSONB,
+    keywords TEXT[],
+    status news_status NOT NULL DEFAULT 'queued',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_by TEXT,
+    UNIQUE (url)
+);
+
+-- Affiliate prep
+CREATE TABLE affiliate_providers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT UNIQUE NOT NULL,
+    active BOOLEAN DEFAULT true,
+    resolver_strategy TEXT,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE affiliates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title_id UUID REFERENCES titles(id) ON DELETE CASCADE,
+    country TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    url TEXT,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    last_checked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    meta JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE (title_id, country, provider)
+);
+
+-- Admin, jobs, settings
+CREATE TABLE admin_users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT UNIQUE NOT NULL,
+    role admin_role NOT NULL DEFAULT 'analyst',
+    active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE jobs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    type TEXT NOT NULL,
+    payload JSONB,
+    status job_status NOT NULL DEFAULT 'queued',
+    attempts INTEGER DEFAULT 0,
+    error TEXT,
+    scheduled_for TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    started_at TIMESTAMP WITH TIME ZONE,
+    finished_at TIMESTAMP WITH TIME ZONE,
+    created_by TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE job_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
+    ts TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    level TEXT NOT NULL,
+    message TEXT NOT NULL,
+    data JSONB
+);
+
+CREATE TABLE settings (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE audit_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    actor_email TEXT NOT NULL,
+    action TEXT NOT NULL,
+    entity TEXT NOT NULL,
+    entity_id TEXT,
+    diff JSONB,
+    ts TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX idx_titles_type_year ON titles(type, EXTRACT(YEAR FROM COALESCE(release_date, first_air_date)));
+CREATE INDEX idx_titles_slug ON titles(slug);
+CREATE INDEX idx_titles_tmdb_id ON titles(tmdb_id);
+CREATE INDEX idx_titles_popularity ON titles(popularity DESC);
+CREATE INDEX idx_titles_vote_average ON titles(vote_average DESC);
+
+-- idx_watch_providers_title_country is redundant with UNIQUE constraint
+CREATE INDEX idx_watch_providers_country ON watch_providers(country);
+
+CREATE INDEX idx_news_articles_published_at ON news_articles(published_at DESC);
+CREATE INDEX idx_news_articles_status ON news_articles(status);
+CREATE INDEX idx_news_articles_entities ON news_articles USING GIN(entities);
+CREATE INDEX idx_news_articles_keywords ON news_articles USING GIN(keywords);
+
+CREATE INDEX idx_affiliates_country_provider ON affiliates(country, provider);
+CREATE INDEX idx_affiliates_title_country ON affiliates(title_id, country);
+
+CREATE INDEX idx_jobs_status ON jobs(status);
+CREATE INDEX idx_jobs_scheduled_for ON jobs(scheduled_for);
+CREATE INDEX idx_jobs_type ON jobs(type);
+
+CREATE INDEX idx_content_items_status ON content_items(status);
+CREATE INDEX idx_content_items_scheduled_for ON content_items(scheduled_for);
+CREATE INDEX idx_content_items_published_at ON content_items(published_at DESC);
+
+CREATE INDEX idx_audit_logs_actor ON audit_logs(actor_email);
+CREATE INDEX idx_audit_logs_entity ON audit_logs(entity, entity_id);
+CREATE INDEX idx_audit_logs_ts ON audit_logs(ts DESC);
+
+-- RLS Policies
+ALTER TABLE titles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE factsheets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE content_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE news_articles ENABLE ROW LEVEL SECURITY;
+
+-- Public read access for titles (limited fields)
+CREATE POLICY "Public can read titles" ON titles
+    FOR SELECT USING (true);
+
+-- Public read access for factsheets
+CREATE POLICY "Public can read factsheets" ON factsheets
+    FOR SELECT USING (true);
+
+-- Public read access for published content
+CREATE POLICY "Public can read published content" ON content_items
+    FOR SELECT USING (status = 'published');
+
+-- Public read access for approved news
+CREATE POLICY "Public can read approved news" ON news_articles
+    FOR SELECT USING (status = 'approved');
+
+-- Admin-only policies for all other tables
+CREATE POLICY "Admin only access" ON admin_users
+    FOR ALL USING (auth.role() = 'service_role');
+
+CREATE POLICY "Admin only access" ON jobs
+    FOR ALL USING (auth.role() = 'service_role');
+
+CREATE POLICY "Admin only access" ON job_logs
+    FOR ALL USING (auth.role() = 'service_role');
+
+CREATE POLICY "Admin only access" ON settings
+    FOR ALL USING (auth.role() = 'service_role');
+
+CREATE POLICY "Admin only access" ON audit_logs
+    FOR ALL USING (auth.role() = 'service_role');
+
+-- Insert default settings
+INSERT INTO settings (key, value) VALUES
+('tmdb_config_cache', '{}'),
+('default_languages', '["en-US", "fr-CA"]'),
+('default_countries', '["US", "CA"]'),
+('content_schedule', '{"days": ["tuesday", "friday"], "time": "09:00", "timezone": "America/New_York"}'),
+('site_brand_name', '"YallaCinema"'),
+('seo_defaults', '{"meta_suffix": " | YallaCinema", "robots": "index, follow"}'),
+('affiliate_disclosure', '"Some links may earn us a commission at no cost to you."');
+
+-- Insert default content templates
+INSERT INTO content_templates (kind, name, template_md, template_blocks) VALUES
+('top', 'Top 10 Movies', '# Top 10 {{genre}} Movies to Watch {{country}}\n\n{{#each movies}}\n## {{@index}}. {{title}} ({{year}})\n{{overview}}\n\n**Where to watch:** {{providers}}\n\n{{/each}}', '{}'),
+('top', 'Top 10 TV Shows', '# Top 10 {{genre}} TV Shows to Watch {{country}}\n\n{{#each shows}}\n## {{@index}}. {{title}} ({{year}})\n{{overview}}\n\n**Where to watch:** {{providers}}\n\n{{/each}}', '{}'),
+('howto', 'How to Watch', '# How to Watch {{title}} ({{year}})\n\n{{overview}}\n\n## Where to Stream {{title}}\n\n{{#each providers}}\n- **{{name}}**: {{url}}\n{{/each}}\n\n## Cast & Crew\n\n{{#each cast}}\n- **{{name}}** as {{character}}\n{{/each}}', '{}'),
+('comparison', 'Movie Comparison', '# {{title1}} vs {{title2}}: Which Should You Watch?\n\n## {{title1}} ({{year1}})\n{{overview1}}\n\n## {{title2}} ({{year2}})\n{{overview2}}\n\n## Verdict\n\n{{comparison}}', '{}');
+
+-- Insert default affiliate providers
+INSERT INTO affiliate_providers (name, active, resolver_strategy, notes) VALUES
+('Netflix', true, 'direct', 'Direct streaming service'),
+('Amazon Prime Video', true, 'amazon_associate', 'Amazon Associates program'),
+('Disney+', true, 'direct', 'Direct streaming service'),
+('Hulu', true, 'direct', 'Direct streaming service'),
+('Max', true, 'direct', 'Direct streaming service'),
+('Apple TV+', true, 'direct', 'Direct streaming service'),
+('Paramount+', true, 'direct', 'Direct streaming service'),
+('Peacock', true, 'direct', 'Direct streaming service');
+
+-- Create updated_at trigger function
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Add updated_at triggers
+CREATE TRIGGER update_titles_updated_at BEFORE UPDATE ON titles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_people_updated_at BEFORE UPDATE ON people FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_factsheets_updated_at BEFORE UPDATE ON factsheets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_content_templates_updated_at BEFORE UPDATE ON content_templates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_content_items_updated_at BEFORE UPDATE ON content_items FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_news_feeds_updated_at BEFORE UPDATE ON news_feeds FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_affiliate_providers_updated_at BEFORE UPDATE ON affiliate_providers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_affiliates_updated_at BEFORE UPDATE ON affiliates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_admin_users_updated_at BEFORE UPDATE ON admin_users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_jobs_updated_at BEFORE UPDATE ON jobs FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_settings_updated_at BEFORE UPDATE ON settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Success message
+SELECT 'Database setup completed successfully! 🎉' as message;

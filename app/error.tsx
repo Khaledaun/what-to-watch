@@ -2,8 +2,8 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import Navigation from "@/components/Navigation";
-import { motion } from "framer-motion";
-import { fadeInUp } from "@/lib/motion";
+// import { motion } from "framer-motion";
+// import { fadeInUp } from "@/lib/motion";
 
 export default function Error({
   error,
@@ -20,12 +20,7 @@ export default function Error({
   return (
     <div className="min-h-screen">
       <Navigation />
-      <motion.main
-        initial="hidden"
-        animate="show"
-        variants={fadeInUp}
-        className="container py-20 text-center"
-      >
+      <main className="container py-20 text-center">
         <div className="max-w-2xl mx-auto">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
             <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,7 +69,7 @@ export default function Error({
             </div>
           </div>
         </div>
-      </motion.main>
+      </main>
     </div>
   );
 }

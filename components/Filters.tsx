@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PLATFORMS, PLATFORM_NAMES, MOODS, MOOD_NAMES, TIME_BUDGETS, AUDIENCES, AUDIENCE_NAMES, CONTENT_TYPES } from '@/lib/constants'
-import { FilterInput, Platform, Mood, TimeBudget, Audience, ContentType } from '@/lib/types'
+import { FilterInput } from '@/lib/types'
+import { Platform, Mood, TimeBudget, Audience, ContentType } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
 interface FiltersProps {
@@ -16,7 +17,7 @@ interface FiltersProps {
 
 export function Filters({ onFiltersChange, initialFilters, className }: FiltersProps) {
   const [platforms, setPlatforms] = useState<Platform[]>(initialFilters?.platforms || ['netflix'])
-  const [moods, setMoods] = useState<Mood[]>(initialFilters?.moods || [])
+  const [moods, setMoods] = useState<Mood[]>(initialFilters?.moods as Mood[] || [])
   const [timeBudget, setTimeBudget] = useState<TimeBudget | undefined>(initialFilters?.timeBudget)
   const [audience, setAudience] = useState<Audience | undefined>(initialFilters?.audience)
   const [type, setType] = useState<ContentType>(initialFilters?.type || 'either')
