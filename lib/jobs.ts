@@ -1,6 +1,6 @@
 // Re-export the real job system
+export type { Job } from './real-jobs';
 export { 
-  Job, 
   RealJobScheduler as JobScheduler, 
   RealJobExecutor as JobExecutor,
   jobScheduler, 
