@@ -141,8 +141,8 @@ export function AdminProviders() {
   ]
 
   const filteredProviders = providers.filter(provider => {
-    const matchesSearch = provider.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         provider.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = (provider.display_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (provider.name || '').toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || provider.status === statusFilter
     const matchesCountry = countryFilter === 'all' || provider.country === countryFilter
     return matchesSearch && matchesStatus && matchesCountry

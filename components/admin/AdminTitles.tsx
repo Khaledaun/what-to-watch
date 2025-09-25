@@ -97,7 +97,7 @@ export function AdminTitles() {
   ]
 
   const filteredTitles = titles.filter(title => {
-    const matchesSearch = title.title.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = (title.title || '').toLowerCase().includes(searchTerm.toLowerCase())
     const matchesType = typeFilter === 'all' || title.type === typeFilter
     const matchesStatus = statusFilter === 'all' || title.status === statusFilter
     return matchesSearch && matchesType && matchesStatus

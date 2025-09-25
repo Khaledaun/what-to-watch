@@ -102,8 +102,8 @@ export function AdminNews() {
   ]
 
   const filteredArticles = articles.filter(article => {
-    const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         article.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = article.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (article.excerpt || '').toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || article.status === statusFilter
     const matchesCategory = categoryFilter === 'all' || article.category === categoryFilter
     return matchesSearch && matchesStatus && matchesCategory

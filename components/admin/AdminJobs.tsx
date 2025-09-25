@@ -112,8 +112,8 @@ export function AdminJobs() {
   }
 
   const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.type.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = (job.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (job.type || '').toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || job.status === statusFilter
     return matchesSearch && matchesStatus
   })

@@ -103,8 +103,8 @@ export function AdminAudit() {
   ]
 
   const filteredLogs = logs.filter(log => {
-    const matchesSearch = log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.category.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = (log.message || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (log.category || '').toLowerCase().includes(searchTerm.toLowerCase())
     const matchesLevel = levelFilter === 'all' || log.level === levelFilter
     const matchesCategory = categoryFilter === 'all' || log.category === categoryFilter
     return matchesSearch && matchesLevel && matchesCategory
