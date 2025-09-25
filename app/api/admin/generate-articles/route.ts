@@ -1,41 +1,96 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/database';
+import { aiClient } from '@/lib/ai-client';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { generateNewTopics = true, topicCount = 3 } = body;
+    const { generateNewTopics = true, topicCount = 3, generateFullArticles = false } = body;
 
     const client = db.ensureClient();
     
+    // Check if AI is available
+    const availableProviders = aiClient.getAvailableProviders();
+    if (availableProviders.length === 0) {
+      return NextResponse.json({
+        success: false,
+        message: 'No AI providers configured. Please add API keys in Settings.',
+        availableProviders: [],
+        error: 'AI_NOT_CONFIGURED'
+      }, { status: 400 });
+    }
+
+    console.log(`Using AI provider: ${aiClient.getDefaultProvider()}`);
+    console.log(`Available providers: ${availableProviders.join(', ')}`);
+
+    // Generate topics using AI
+    const topics = await aiClient.generateArticleTopics(topicCount);
+    
     if (!client) {
-      // Return mock data when database is not available
+      // Return AI-generated topics when database is not available
       return NextResponse.json({
         success: true,
-        count: topicCount,
-        message: 'Generated mock article topics (database not available)',
-        topics: generateMockTopics(topicCount)
+        count: topics.length,
+        message: `Generated ${topics.length} AI-powered article topics (database not available)`,
+        topics: topics,
+        aiProvider: aiClient.getDefaultProvider(),
+        availableProviders
       });
     }
 
-    // Generate new article topics
-    const topics = generateMockTopics(topicCount);
+    // Generate full articles if requested
+    let fullArticles = [];
+    if (generateFullArticles) {
+      console.log('Generating full articles...');
+      for (const topic of topics) {
+        try {
+          const article = await aiClient.generateFullArticle(topic);
+          fullArticles.push({
+            ...topic,
+            content: article.content,
+            excerpt: article.excerpt,
+            word_count: article.wordCount,
+            seo_score: article.seoScore
+          });
+        } catch (error) {
+          console.error(`Error generating article for "${topic.title}":`, error);
+          // Add topic without full content
+          fullArticles.push({
+            ...topic,
+            content: topic.description,
+            excerpt: topic.description,
+            word_count: 500,
+            seo_score: 60
+          });
+        }
+      }
+    } else {
+      // Just topics
+      fullArticles = topics.map(topic => ({
+        ...topic,
+        content: topic.description,
+        excerpt: topic.description,
+        word_count: 500,
+        seo_score: 60
+      }));
+    }
     
-    // Save topics to database
+    // Save to database
     const { data, error } = await client
       .from('content_items')
-      .insert(topics.map(topic => ({
-        title: topic.title,
-        slug: topic.slug,
-        content: topic.content,
-        excerpt: topic.excerpt,
-        category: topic.category,
+      .insert(fullArticles.map(article => ({
+        title: article.title,
+        slug: article.slug,
+        content: article.content,
+        excerpt: article.excerpt,
+        category: article.category,
         status: 'draft',
-        type: 'topic',
-        word_count: topic.wordCount,
-        read_time: Math.ceil(topic.wordCount / 200),
+        type: generateFullArticles ? 'article' : 'topic',
+        word_count: article.word_count,
+        read_time: Math.ceil(article.word_count / 200),
+        seo_score: article.seo_score,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })))
@@ -52,9 +107,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      count: topics.length,
-      message: `Generated ${topics.length} new article topics`,
-      topics: data
+      count: fullArticles.length,
+      message: `Generated ${fullArticles.length} ${generateFullArticles ? 'full articles' : 'article topics'} using AI`,
+      topics: data,
+      aiProvider: aiClient.getDefaultProvider(),
+      availableProviders,
+      generatedFullArticles: generateFullArticles
     });
 
   } catch (error) {
@@ -62,7 +120,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: false,
       message: 'Failed to generate articles',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      availableProviders: aiClient.getAvailableProviders()
     }, { status: 500 });
   }
 }

@@ -306,41 +306,97 @@ export default function ContentStudioPage() {
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                       <h3 className="text-lg font-semibold text-blue-900 mb-2">🤖 AI Content Generation</h3>
                       <p className="text-blue-700 text-sm mb-4">
-                        Generate new article topics using AI and process them through the content pipeline.
+                        Generate new article topics and full articles using AI. Choose your preferred option below.
                       </p>
-                      <div className="flex gap-3">
-                        <button 
-                          onClick={async () => {
-                            const button = event?.target as HTMLButtonElement;
-                            const originalText = button.textContent;
-                            button.textContent = 'Generating...';
-                            button.disabled = true;
-                            
-                            try {
-                              const response = await fetch('/api/admin/generate-articles', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ generateNewTopics: true, topicCount: 3 })
-                              });
-                              const data = await response.json();
-                              if (response.ok) {
-                                alert(`✅ Generated ${data.count} new topics and created article generation jobs!`);
-                                // Refresh the page to show new topics
-                                window.location.reload();
-                              } else {
-                                alert(`❌ Error: ${data.message}`);
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <h4 className="font-medium text-blue-900">Quick Generation</h4>
+                          <button 
+                            onClick={async () => {
+                              const button = event?.target as HTMLButtonElement;
+                              const originalText = button.textContent;
+                              button.textContent = 'Generating Topics...';
+                              button.disabled = true;
+                              
+                              try {
+                                const response = await fetch('/api/admin/generate-articles', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ 
+                                    generateNewTopics: true, 
+                                    topicCount: 3,
+                                    generateFullArticles: false 
+                                  })
+                                });
+                                const data = await response.json();
+                                if (response.ok) {
+                                  alert(`✅ Generated ${data.count} new topics using ${data.aiProvider}!\n\nAvailable providers: ${data.availableProviders.join(', ')}`);
+                                  window.location.reload();
+                                } else {
+                                  if (data.error === 'AI_NOT_CONFIGURED') {
+                                    alert(`❌ No AI providers configured!\n\nPlease add API keys in Settings:\n- OpenAI API Key\n- Grok API Key\n- Claude API Key`);
+                                  } else {
+                                    alert(`❌ Error: ${data.message}`);
+                                  }
+                                }
+                              } catch (error) {
+                                alert('❌ Failed to generate topics');
+                              } finally {
+                                button.textContent = originalText;
+                                button.disabled = false;
                               }
-                            } catch (error) {
-                              alert('❌ Failed to generate topics and articles');
-                            } finally {
-                              button.textContent = originalText;
-                              button.disabled = false;
-                            }
-                          }}
-                          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                        >
-                          🚀 Generate New Topics & Articles
-                        </button>
+                            }}
+                            className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                          >
+                            🚀 Generate Topics Only
+                          </button>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          <h4 className="font-medium text-blue-900">Full Article Generation</h4>
+                          <button 
+                            onClick={async () => {
+                              const button = event?.target as HTMLButtonElement;
+                              const originalText = button.textContent;
+                              button.textContent = 'Generating Full Articles...';
+                              button.disabled = true;
+                              
+                              try {
+                                const response = await fetch('/api/admin/generate-articles', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ 
+                                    generateNewTopics: true, 
+                                    topicCount: 2,
+                                    generateFullArticles: true 
+                                  })
+                                });
+                                const data = await response.json();
+                                if (response.ok) {
+                                  alert(`✅ Generated ${data.count} full articles using ${data.aiProvider}!\n\nEach article is 2000-3000 words with SEO optimization.`);
+                                  window.location.reload();
+                                } else {
+                                  if (data.error === 'AI_NOT_CONFIGURED') {
+                                    alert(`❌ No AI providers configured!\n\nPlease add API keys in Settings:\n- OpenAI API Key\n- Grok API Key\n- Claude API Key`);
+                                  } else {
+                                    alert(`❌ Error: ${data.message}`);
+                                  }
+                                }
+                              } catch (error) {
+                                alert('❌ Failed to generate full articles');
+                              } finally {
+                                button.textContent = originalText;
+                                button.disabled = false;
+                              }
+                            }}
+                            className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                          >
+                            📝 Generate Full Articles
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 pt-4 border-t border-blue-200">
                         <button 
                           onClick={async () => {
                             const button = event?.target as HTMLButtonElement;
@@ -363,7 +419,7 @@ export default function ContentStudioPage() {
                               button.disabled = false;
                             }
                           }}
-                          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
                         >
                           ⚡ Process Job Queue
                         </button>

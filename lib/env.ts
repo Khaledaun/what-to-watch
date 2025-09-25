@@ -33,10 +33,15 @@ const envSchema = z.object({
   // Content Generation
   OPENAI_API_KEY: z.string().optional(),
   CONTENT_GENERATION_ENABLED: z.string().default('true'),
+  DEFAULT_AI_PROVIDER: z.string().default('openai'),
   
   // Grok AI Integration
   GROK_API_KEY: z.string().optional(),
   GROK_MODEL: z.string().default('grok-4-fast-reasoning'),
+  
+  // Claude AI Integration
+  CLAUDE_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
   
   // Email Configuration
   EMAIL_USER: z.string().optional(),
