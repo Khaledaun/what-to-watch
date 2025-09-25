@@ -16,28 +16,54 @@ export class AIClient {
   }
 
   private initializeProviders() {
-    // OpenAI
-    if (env.OPENAI_API_KEY) {
-      this.providers.push({
-        name: 'openai',
-        apiKey: env.OPENAI_API_KEY,
-        baseUrl: 'https://api.openai.com/v1',
-        model: 'gpt-4o-mini'
-      });
-    }
+    try {
+      // OpenAI
+      if (env.OPENAI_API_KEY && env.OPENAI_API_KEY.trim() !== '') {
+        this.providers.push({
+          name: 'openai',
+          apiKey: env.OPENAI_API_KEY,
+          baseUrl: 'https://api.openai.com/v1',
+          model: 'gpt-4o-mini'
+        });
+        console.log('✅ OpenAI provider initialized');
+      } else {
+        console.log('⚠️ OpenAI API key not configured');
+      }
 
-    // Grok AI
-    if (env.GROK_API_KEY) {
-      this.providers.push({
-        name: 'grok',
-        apiKey: env.GROK_API_KEY,
-        baseUrl: 'https://api.x.ai/v1',
-        model: env.GROK_MODEL || 'grok-4-fast-reasoning'
-      });
-    }
+      // Grok AI
+      if (env.GROK_API_KEY && env.GROK_API_KEY.trim() !== '') {
+        this.providers.push({
+          name: 'grok',
+          apiKey: env.GROK_API_KEY,
+          baseUrl: 'https://api.x.ai/v1',
+          model: env.GROK_MODEL || 'grok-4-fast-reasoning'
+        });
+        console.log('✅ Grok provider initialized');
+      } else {
+        console.log('⚠️ Grok API key not configured');
+      }
 
-    // Set default provider
-    this.defaultProvider = env.DEFAULT_AI_PROVIDER || 'openai';
+      // Claude AI
+      if (env.CLAUDE_API_KEY && env.CLAUDE_API_KEY.trim() !== '') {
+        this.providers.push({
+          name: 'claude',
+          apiKey: env.CLAUDE_API_KEY,
+          baseUrl: 'https://api.anthropic.com/v1',
+          model: 'claude-3-5-sonnet-20241022'
+        });
+        console.log('✅ Claude provider initialized');
+      } else {
+        console.log('⚠️ Claude API key not configured');
+      }
+
+      // Set default provider
+      this.defaultProvider = env.DEFAULT_AI_PROVIDER || 'openai';
+      console.log(`🎯 Default AI provider: ${this.defaultProvider}`);
+      console.log(`📊 Total providers configured: ${this.providers.length}`);
+      
+    } catch (error) {
+      console.error('❌ Error initializing AI providers:', error);
+    }
   }
 
   async generateContent(
@@ -49,8 +75,11 @@ export class AIClient {
     const providerConfig = this.providers.find(p => p.name === selectedProvider);
 
     if (!providerConfig) {
-      throw new Error(`AI provider '${selectedProvider}' not configured or available`);
+      const availableProviders = this.providers.map(p => p.name).join(', ');
+      throw new Error(`AI provider '${selectedProvider}' not configured. Available providers: ${availableProviders || 'none'}`);
     }
+
+    console.log(`🚀 Making API call to ${selectedProvider} (${providerConfig.model})`);
 
     try {
       const response = await fetch(`${providerConfig.baseUrl}/chat/completions`, {
@@ -81,13 +110,17 @@ export class AIClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(`AI API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
+        const errorMessage = `AI API error: ${response.status} - ${errorData.error?.message || response.statusText}`;
+        console.error(`❌ ${errorMessage}`);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      return data.choices[0]?.message?.content || 'No content generated';
+      const content = data.choices[0]?.message?.content || 'No content generated';
+      console.log(`✅ AI response received (${content.length} characters)`);
+      return content;
     } catch (error) {
-      console.error(`AI generation error with ${selectedProvider}:`, error);
+      console.error(`❌ AI generation error with ${selectedProvider}:`, error);
       throw error;
     }
   }
@@ -99,6 +132,12 @@ export class AIClient {
     description: string;
     keywords: string[];
   }>> {
+    // Check if any providers are available
+    if (this.providers.length === 0) {
+      console.log('⚠️ No AI providers available, using fallback topics');
+      return this.getFallbackTopics(count);
+    }
+
     const prompt = `Generate ${count} trending article topics for a movie and TV show recommendation website. Each topic should be:
 
 1. SEO-optimized with popular keywords
@@ -116,18 +155,26 @@ Examples of good topics:
 Focus on trending content and streaming platform comparisons.`;
 
     try {
+      console.log(`🤖 Generating ${count} topics using ${this.defaultProvider}...`);
       const content = await this.generateContent(prompt, this.defaultProvider, 1500);
       
       // Try to parse JSON response
       try {
         const topics = JSON.parse(content);
-        return Array.isArray(topics) ? topics : this.getFallbackTopics(count);
-      } catch {
-        // If JSON parsing fails, extract topics from text
+        if (Array.isArray(topics) && topics.length > 0) {
+          console.log(`✅ Generated ${topics.length} topics successfully`);
+          return topics;
+        } else {
+          console.log('⚠️ Invalid topics format, using fallback');
+          return this.getFallbackTopics(count);
+        }
+      } catch (parseError) {
+        console.log('⚠️ JSON parsing failed, extracting from text');
         return this.extractTopicsFromText(content, count);
       }
     } catch (error) {
-      console.error('Error generating topics:', error);
+      console.error('❌ Error generating topics:', error);
+      console.log('🔄 Falling back to predefined topics');
       return this.getFallbackTopics(count);
     }
   }
