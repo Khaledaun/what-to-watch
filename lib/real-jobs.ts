@@ -298,6 +298,3 @@ export class RealJobExecutor {
 // Export singleton instances
 export const jobScheduler = new RealJobScheduler();
 export const jobExecutor = new RealJobExecutor();
-
-// Export the Job interface for compatibility
-export type { Job };
