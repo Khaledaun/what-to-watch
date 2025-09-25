@@ -48,6 +48,7 @@ interface SettingsData {
 }
 
 export function AdminSettings() {
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [settings, setSettings] = useState<SettingsData>({
     openaiApiKey: '',
     grokApiKey: '',
@@ -123,6 +124,7 @@ export function AdminSettings() {
       if (response.ok) {
         const data = await response.json();
         setMessage({ type: 'success', text: data.message || 'Settings saved successfully!' });
+        setLastUpdated(new Date().toISOString());
       } else {
         const errorData = await response.json();
         setMessage({ type: 'error', text: errorData.message || 'Failed to save settings. Please try again.' });
