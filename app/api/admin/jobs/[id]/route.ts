@@ -90,7 +90,7 @@ export async function POST(
     });
 
     // Execute job in background
-    jobExecutor.executeJob(job).catch(console.error);
+    jobExecutor.execute(job).catch(console.error);
 
     return NextResponse.json({ message: 'Job queued for retry' });
   } catch (error) {
