@@ -154,10 +154,23 @@ export function AdminSettings() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings & Access</h1>
-        <p className="text-gray-600">Configure API keys, system settings, and user access</p>
+    <div className="space-y-8">
+      {/* Enhanced Header */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Settings & Access</h1>
+            <p className="text-gray-600 mt-2">Configure API keys, system settings, and user access</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-sm text-gray-500">Last updated</p>
+              <p className="text-sm font-medium text-gray-900">
+                {lastUpdated ? new Date(lastUpdated).toLocaleString() : 'Never'}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {message && (
@@ -170,13 +183,21 @@ export function AdminSettings() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* AI Tools Configuration */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <span className="mr-2">🤖</span>
-            AI Tools Configuration
-          </h2>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <span className="mr-3 text-2xl">🤖</span>
+              AI Tools Configuration
+            </h2>
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${settings.contentGenerationEnabled ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+              <span className="text-sm text-gray-600">
+                {settings.contentGenerationEnabled ? 'Enabled' : 'Disabled'}
+              </span>
+            </div>
+          </div>
           
           <div className="space-y-6">
             {/* Default AI Provider */}
@@ -313,11 +334,19 @@ export function AdminSettings() {
         </div>
 
         {/* TMDB Configuration */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <span className="mr-2">🎬</span>
-            TMDB Configuration
-          </h2>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <span className="mr-3 text-2xl">🎬</span>
+              TMDB Configuration
+            </h2>
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${settings.tmdbApiKey ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span className="text-sm text-gray-600">
+                {settings.tmdbApiKey ? 'Connected' : 'Not Connected'}
+              </span>
+            </div>
+          </div>
           
           <div className="space-y-4">
             <div>

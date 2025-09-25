@@ -1,4 +1,6 @@
 import { Metadata } from 'next'
+import Navigation from '@/components/Navigation'
+import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
   title: 'How to Watch Popular Movies on All Streaming Platforms | What to Watch Tonight',
@@ -17,6 +19,7 @@ export const metadata: Metadata = {
 export default function HowToWatchPopularMoviesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <Navigation />
       <div className="container mx-auto px-4 py-12">
         <article className="max-w-4xl mx-auto">
           <header className="mb-8">
@@ -169,6 +172,7 @@ export default function HowToWatchPopularMoviesPage() {
           </div>
         </article>
       </div>
+      <Footer />
     </div>
   )
 }

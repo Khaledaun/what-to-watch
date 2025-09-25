@@ -1,5 +1,7 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import Navigation from '@/components/Navigation'
+import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
   title: 'Top 10 Action Movies on Netflix in 2024 | What to Watch Tonight',
@@ -18,6 +20,7 @@ export const metadata: Metadata = {
 export default function Top10ActionMoviesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <Navigation />
       <div className="container mx-auto px-4 py-12">
         <article className="max-w-4xl mx-auto">
           <header className="mb-8">
@@ -159,6 +162,7 @@ export default function Top10ActionMoviesPage() {
           </div>
         </article>
       </div>
+      <Footer />
     </div>
   )
 }
