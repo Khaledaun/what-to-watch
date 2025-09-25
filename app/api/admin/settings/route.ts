@@ -12,8 +12,15 @@ export async function GET(request: NextRequest) {
       // Return environment variables as settings when database is not available
       return NextResponse.json({
         settings: {
-          openaiApiKey: process.env.OPENAI_API_KEY || process.env.GROK_API_KEY || 'sk-proj-***',
+          openaiApiKey: process.env.OPENAI_API_KEY || 'sk-proj-***',
+          grokApiKey: process.env.GROK_API_KEY || 'grok-***',
+          claudeApiKey: process.env.CLAUDE_API_KEY || 'sk-ant-***',
+          anthropicApiKey: process.env.ANTHROPIC_API_KEY || 'sk-ant-***',
           contentGenerationEnabled: process.env.CONTENT_GENERATION_ENABLED === 'true',
+          defaultAiProvider: process.env.DEFAULT_AI_PROVIDER || 'openai',
+          contentGenerationPrompt: process.env.CONTENT_GENERATION_PROMPT || 'Generate engaging, SEO-optimized content about movies and TV shows...',
+          topicGenerationPrompt: process.env.TOPIC_GENERATION_PROMPT || 'Create trending article topics for a movie recommendation website...',
+          seoOptimizationPrompt: process.env.SEO_OPTIMIZATION_PROMPT || 'Optimize this content for search engines with proper keywords...',
           tmdbApiKey: process.env.TMDB_API_KEY || 'tmdb_***',
           siteRegionDefault: process.env.NEXT_PUBLIC_SITE_REGION_DEFAULT || 'US',
           regionFallback: process.env.REGION_FALLBACK || 'CA',

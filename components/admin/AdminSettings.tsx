@@ -2,9 +2,18 @@
 import { useState, useEffect } from 'react';
 
 interface SettingsData {
-  // AI Tools
+  // AI Tools - Multiple Providers
   openaiApiKey: string;
+  grokApiKey: string;
+  claudeApiKey: string;
+  anthropicApiKey: string;
   contentGenerationEnabled: boolean;
+  defaultAiProvider: 'openai' | 'grok' | 'claude';
+  
+  // AI Prompts
+  contentGenerationPrompt: string;
+  topicGenerationPrompt: string;
+  seoOptimizationPrompt: string;
   
   // TMDB
   tmdbApiKey: string;
@@ -41,7 +50,14 @@ interface SettingsData {
 export function AdminSettings() {
   const [settings, setSettings] = useState<SettingsData>({
     openaiApiKey: '',
+    grokApiKey: '',
+    claudeApiKey: '',
+    anthropicApiKey: '',
     contentGenerationEnabled: false,
+    defaultAiProvider: 'openai',
+    contentGenerationPrompt: 'Generate engaging, SEO-optimized content about movies and TV shows...',
+    topicGenerationPrompt: 'Create trending article topics for a movie recommendation website...',
+    seoOptimizationPrompt: 'Optimize this content for search engines with proper keywords...',
     tmdbApiKey: '',
     siteRegionDefault: 'US',
     regionFallback: 'CA',
@@ -162,21 +178,123 @@ export function AdminSettings() {
             AI Tools Configuration
           </h2>
           
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {/* Default AI Provider */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Grok API Key
+                Default AI Provider
               </label>
-              <input
-                type="password"
-                value={settings.openaiApiKey}
-                onChange={(e) => handleInputChange('openaiApiKey', e.target.value)}
-                placeholder="Enter your Grok API key from x.ai"
+              <select
+                value={settings.defaultAiProvider}
+                onChange={(e) => handleInputChange('defaultAiProvider', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              >
+                <option value="openai">OpenAI GPT</option>
+                <option value="grok">Grok (x.ai)</option>
+                <option value="claude">Claude (Anthropic)</option>
+              </select>
               <p className="text-xs text-gray-500 mt-1">
-                Used for content generation, factsheet building, and article creation
+                Choose which AI provider to use for content generation
               </p>
+            </div>
+
+            {/* API Keys */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  OpenAI API Key
+                </label>
+                <input
+                  type="password"
+                  value={settings.openaiApiKey}
+                  onChange={(e) => handleInputChange('openaiApiKey', e.target.value)}
+                  placeholder="sk-proj-..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Grok API Key
+                </label>
+                <input
+                  type="password"
+                  value={settings.grokApiKey}
+                  onChange={(e) => handleInputChange('grokApiKey', e.target.value)}
+                  placeholder="grok-..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Claude API Key
+                </label>
+                <input
+                  type="password"
+                  value={settings.claudeApiKey}
+                  onChange={(e) => handleInputChange('claudeApiKey', e.target.value)}
+                  placeholder="sk-ant-..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Anthropic API Key
+                </label>
+                <input
+                  type="password"
+                  value={settings.anthropicApiKey}
+                  onChange={(e) => handleInputChange('anthropicApiKey', e.target.value)}
+                  placeholder="sk-ant-..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* AI Prompts */}
+            <div className="space-y-4">
+              <h3 className="text-md font-semibold text-gray-900">AI Prompts</h3>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Content Generation Prompt
+                </label>
+                <textarea
+                  value={settings.contentGenerationPrompt}
+                  onChange={(e) => handleInputChange('contentGenerationPrompt', e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter the prompt template for content generation..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Topic Generation Prompt
+                </label>
+                <textarea
+                  value={settings.topicGenerationPrompt}
+                  onChange={(e) => handleInputChange('topicGenerationPrompt', e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter the prompt template for topic generation..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  SEO Optimization Prompt
+                </label>
+                <textarea
+                  value={settings.seoOptimizationPrompt}
+                  onChange={(e) => handleInputChange('seoOptimizationPrompt', e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter the prompt template for SEO optimization..."
+                />
+              </div>
             </div>
 
             <div className="flex items-center">
@@ -438,16 +556,40 @@ export function AdminSettings() {
           API Status
         </h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
             <div>
-              <div className="font-medium text-gray-900">Grok AI</div>
-              <div className="text-sm text-gray-500">Content Generation</div>
+              <div className="font-medium text-gray-900">OpenAI</div>
+              <div className="text-sm text-gray-500">GPT Models</div>
             </div>
             <div className={`px-2 py-1 rounded-full text-xs font-medium ${
               settings.openaiApiKey ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
             }`}>
               {settings.openaiApiKey ? 'Connected' : 'Not Configured'}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+            <div>
+              <div className="font-medium text-gray-900">Grok AI</div>
+              <div className="text-sm text-gray-500">x.ai Models</div>
+            </div>
+            <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+              settings.grokApiKey ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}>
+              {settings.grokApiKey ? 'Connected' : 'Not Configured'}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+            <div>
+              <div className="font-medium text-gray-900">Claude</div>
+              <div className="text-sm text-gray-500">Anthropic AI</div>
+            </div>
+            <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+              settings.claudeApiKey ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}>
+              {settings.claudeApiKey ? 'Connected' : 'Not Configured'}
             </div>
           </div>
 
@@ -460,18 +602,6 @@ export function AdminSettings() {
               settings.tmdbApiKey ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
             }`}>
               {settings.tmdbApiKey ? 'Connected' : 'Not Configured'}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-            <div>
-              <div className="font-medium text-gray-900">Supabase</div>
-              <div className="text-sm text-gray-500">Database</div>
-            </div>
-            <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-              settings.supabaseUrl && settings.supabaseServiceRoleKey ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}>
-              {settings.supabaseUrl && settings.supabaseServiceRoleKey ? 'Connected' : 'Not Configured'}
             </div>
           </div>
         </div>

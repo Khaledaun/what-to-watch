@@ -65,20 +65,13 @@ export default function ContentStudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminHeader />
-      <div className="flex">
-        <AdminSidebar />
-        
-        <main className="flex-1 lg:pl-64">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">✍️ Content Studio</h1>
-                <p className="mt-2 text-gray-600">
-                  Create, manage, and publish articles for your movie and TV content site.
-                </p>
-              </div>
+    <div className="space-y-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">✍️ Content Studio</h1>
+        <p className="mt-2 text-gray-600">
+          Create, manage, and publish articles for your movie and TV content site.
+        </p>
+      </div>
 
               {/* Tabs */}
               <div className="border-b border-gray-200 mb-8">
@@ -309,49 +302,82 @@ export default function ContentStudioPage() {
                     </div>
                   </div>
                   
-                  <div className="mt-6 text-center space-x-4">
-                    <button 
-                      onClick={async () => {
-                        try {
-                          const response = await fetch('/api/admin/generate-articles', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ generateNewTopics: true, topicCount: 3 })
-                          });
-                          const data = await response.json();
-                          if (response.ok) {
-                            alert(`Generated ${data.count} new topics and created article generation jobs!`);
-                            // Refresh the page to show new topics
-                            window.location.reload();
-                          } else {
-                            alert(`Error: ${data.message}`);
-                          }
-                        } catch (error) {
-                          alert('Failed to generate topics and articles');
-                        }
-                      }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Generate New Topics & Articles
-                    </button>
-                    <button 
-                      onClick={async () => {
-                        try {
-                          const response = await fetch('/api/cron/process-jobs', { method: 'POST' });
-                          const data = await response.json();
-                          if (response.ok) {
-                            alert(`Processed ${data.processed} jobs!`);
-                          } else {
-                            alert('Failed to process jobs');
-                          }
-                        } catch (error) {
-                          alert('Failed to process jobs');
-                        }
-                      }}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      Process Job Queue
-                    </button>
+                  <div className="mt-6 space-y-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-blue-900 mb-2">🤖 AI Content Generation</h3>
+                      <p className="text-blue-700 text-sm mb-4">
+                        Generate new article topics using AI and process them through the content pipeline.
+                      </p>
+                      <div className="flex gap-3">
+                        <button 
+                          onClick={async () => {
+                            const button = event?.target as HTMLButtonElement;
+                            const originalText = button.textContent;
+                            button.textContent = 'Generating...';
+                            button.disabled = true;
+                            
+                            try {
+                              const response = await fetch('/api/admin/generate-articles', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ generateNewTopics: true, topicCount: 3 })
+                              });
+                              const data = await response.json();
+                              if (response.ok) {
+                                alert(`✅ Generated ${data.count} new topics and created article generation jobs!`);
+                                // Refresh the page to show new topics
+                                window.location.reload();
+                              } else {
+                                alert(`❌ Error: ${data.message}`);
+                              }
+                            } catch (error) {
+                              alert('❌ Failed to generate topics and articles');
+                            } finally {
+                              button.textContent = originalText;
+                              button.disabled = false;
+                            }
+                          }}
+                          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        >
+                          🚀 Generate New Topics & Articles
+                        </button>
+                        <button 
+                          onClick={async () => {
+                            const button = event?.target as HTMLButtonElement;
+                            const originalText = button.textContent;
+                            button.textContent = 'Processing...';
+                            button.disabled = true;
+                            
+                            try {
+                              const response = await fetch('/api/cron/process-jobs', { method: 'POST' });
+                              const data = await response.json();
+                              if (response.ok) {
+                                alert(`✅ Processed ${data.processed} jobs successfully!`);
+                              } else {
+                                alert('❌ Failed to process jobs');
+                              }
+                            } catch (error) {
+                              alert('❌ Failed to process jobs');
+                            } finally {
+                              button.textContent = originalText;
+                              button.disabled = false;
+                            }
+                          }}
+                          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                        >
+                          ⚡ Process Job Queue
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <h4 className="text-md font-semibold text-yellow-900 mb-2">💡 Pro Tips</h4>
+                      <ul className="text-yellow-700 text-sm space-y-1">
+                        <li>• Generate topics first, then process the job queue to create full articles</li>
+                        <li>• Check the Content Workflow tab to monitor generation progress</li>
+                        <li>• Review generated content before publishing</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               )}
@@ -367,10 +393,6 @@ export default function ContentStudioPage() {
               {activeTab === 'organizer' && (
                 <ArticleOrganizer />
               )}
-            </div>
-          </div>
-        </main>
-      </div>
     </div>
   );
 }
