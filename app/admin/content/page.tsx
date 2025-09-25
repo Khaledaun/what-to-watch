@@ -330,7 +330,7 @@ export default function ContentStudioPage() {
                                 });
                                 const data = await response.json();
                                 if (response.ok) {
-                                  alert(`✅ Generated ${data.count} new topics using ${data.aiProvider}!\n\nAvailable providers: ${data.availableProviders.join(', ')}`);
+                                  alert(`✅ Generated ${data.count} new topics using ${data.aiProvider}!\n\nCreated ${data.jobs?.length || 0} jobs for processing.\n\nAvailable providers: ${data.availableProviders.join(', ')}`);
                                   window.location.reload();
                                 } else {
                                   if (data.error === 'AI_NOT_CONFIGURED') {
@@ -373,7 +373,7 @@ export default function ContentStudioPage() {
                                 });
                                 const data = await response.json();
                                 if (response.ok) {
-                                  alert(`✅ Generated ${data.count} full articles using ${data.aiProvider}!\n\nEach article is 2000-3000 words with SEO optimization.`);
+                                  alert(`✅ Generated ${data.count} full articles using ${data.aiProvider}!\n\nCreated ${data.jobs?.length || 0} jobs for processing.\n\nEach article is 2000-3000 words with SEO optimization.`);
                                   window.location.reload();
                                 } else {
                                   if (data.error === 'AI_NOT_CONFIGURED') {

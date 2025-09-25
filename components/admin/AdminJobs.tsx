@@ -5,141 +5,127 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search, RefreshCw, Play, Pause, Trash2, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { RefreshCw, Play, Pause, Trash2, Plus, Filter, Search } from 'lucide-react'
 
 interface Job {
   id: string
+  name: string
   type: string
-  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
   priority: 'low' | 'medium' | 'high'
   payload: any
   attempts: number
-  max_attempts: number
+  maxAttempts: number
   scheduled_at: string
   started_at?: string
   completed_at?: string
-  error_message?: string
   created_at: string
   updated_at: string
+  error?: string
+  result?: any
 }
 
 export function AdminJobs() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
+  const [processing, setProcessing] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [typeFilter, setTypeFilter] = useState<string>('all')
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   useEffect(() => {
     fetchJobs()
-    // Set up auto-refresh every 30 seconds
-    const interval = setInterval(fetchJobs, 30000)
-    return () => clearInterval(interval)
   }, [])
 
   const fetchJobs = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/admin/workflow/status')
+      const response = await fetch('/api/admin/jobs')
       if (response.ok) {
         const data = await response.json()
         setJobs(data.jobs || [])
       } else {
         console.error('Failed to fetch jobs')
-        setJobs(getMockJobs())
+        setJobs([])
       }
     } catch (error) {
       console.error('Error fetching jobs:', error)
-      setJobs(getMockJobs())
+      setJobs([])
     } finally {
       setLoading(false)
     }
   }
 
-  const getMockJobs = (): Job[] => [
-    {
-      id: '1',
-      type: 'hydrate_title',
-      status: 'completed',
-      priority: 'high',
-      payload: { tmdbId: 155, title: 'The Dark Knight' },
-      attempts: 1,
-      max_attempts: 3,
-      scheduled_at: '2024-01-20T10:00:00Z',
-      started_at: '2024-01-20T10:00:05Z',
-      completed_at: '2024-01-20T10:02:30Z',
-      created_at: '2024-01-20T10:00:00Z',
-      updated_at: '2024-01-20T10:02:30Z'
-    },
-    {
-      id: '2',
-      type: 'generate_article_from_topic',
-      status: 'running',
-      priority: 'medium',
-      payload: { topicId: 'action-movies-netflix', priority: 'medium' },
-      attempts: 1,
-      max_attempts: 3,
-      scheduled_at: '2024-01-20T10:05:00Z',
-      started_at: '2024-01-20T10:05:10Z',
-      created_at: '2024-01-20T10:05:00Z',
-      updated_at: '2024-01-20T10:05:10Z'
-    },
-    {
-      id: '3',
-      type: 'refresh_providers',
-      status: 'failed',
-      priority: 'low',
-      payload: { country: 'US', provider: 'netflix' },
-      attempts: 3,
-      max_attempts: 3,
-      scheduled_at: '2024-01-20T09:30:00Z',
-      started_at: '2024-01-20T09:30:15Z',
-      error_message: 'API rate limit exceeded',
-      created_at: '2024-01-20T09:30:00Z',
-      updated_at: '2024-01-20T09:35:00Z'
-    },
-    {
-      id: '4',
-      type: 'build_factsheet',
-      status: 'queued',
-      priority: 'medium',
-      payload: { tmdbId: 299534, title: 'Avengers: Endgame' },
-      attempts: 0,
-      max_attempts: 3,
-      scheduled_at: '2024-01-20T11:00:00Z',
-      created_at: '2024-01-20T10:15:00Z',
-      updated_at: '2024-01-20T10:15:00Z'
+  const processJobs = async () => {
+    try {
+      setProcessing(true)
+      setMessage(null)
+      
+      const response = await fetch('/api/cron/process-jobs', { method: 'POST' })
+      const data = await response.json()
+      
+      if (response.ok) {
+        setMessage({ 
+          type: 'success', 
+          text: data.message || `Processed ${data.processed} jobs successfully!` 
+        })
+        // Refresh jobs list
+        await fetchJobs()
+      } else {
+        setMessage({ 
+          type: 'error', 
+          text: data.message || 'Failed to process jobs' 
+        })
+      }
+    } catch (error) {
+      setMessage({ 
+        type: 'error', 
+        text: 'Failed to process jobs' 
+      })
+    } finally {
+      setProcessing(false)
     }
-  ]
+  }
+
+  const createTestJob = async () => {
+    try {
+      const response = await fetch('/api/admin/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `Test Job ${Date.now()}`,
+          type: 'content_generation',
+          payload: { test: true, timestamp: new Date().toISOString() },
+          priority: 'medium'
+        })
+      })
+      
+      if (response.ok) {
+        setMessage({ type: 'success', text: 'Test job created successfully!' })
+        await fetchJobs()
+      } else {
+        setMessage({ type: 'error', text: 'Failed to create test job' })
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to create test job' })
+    }
+  }
 
   const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.id.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = job.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         job.type.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || job.status === statusFilter
-    const matchesType = typeFilter === 'all' || job.type === typeFilter
-    return matchesSearch && matchesStatus && matchesType
+    return matchesSearch && matchesStatus
   })
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'bg-green-100 text-green-800'
       case 'running': return 'bg-blue-100 text-blue-800'
-      case 'queued': return 'bg-yellow-100 text-yellow-800'
+      case 'pending': return 'bg-yellow-100 text-yellow-800'
       case 'failed': return 'bg-red-100 text-red-800'
       case 'cancelled': return 'bg-gray-100 text-gray-800'
       default: return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed': return <CheckCircle className="h-4 w-4" />
-      case 'running': return <Play className="h-4 w-4" />
-      case 'queued': return <Clock className="h-4 w-4" />
-      case 'failed': return <XCircle className="h-4 w-4" />
-      case 'cancelled': return <Pause className="h-4 w-4" />
-      default: return <AlertCircle className="h-4 w-4" />
     }
   }
 
@@ -152,8 +138,12 @@ export function AdminJobs() {
     }
   }
 
-  const formatJobType = (type: string) => {
-    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+  const stats = {
+    total: jobs.length,
+    pending: jobs.filter(j => j.status === 'pending').length,
+    running: jobs.filter(j => j.status === 'running').length,
+    completed: jobs.filter(j => j.status === 'completed').length,
+    failed: jobs.filter(j => j.status === 'failed').length
   }
 
   if (loading) {
@@ -162,9 +152,14 @@ export function AdminJobs() {
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
+          </div>
           <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+              <div key={i} className="h-24 bg-gray-200 rounded"></div>
             ))}
           </div>
         </div>
@@ -173,33 +168,58 @@ export function AdminJobs() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Jobs & Scheduling</h1>
-        <p className="text-gray-600">Monitor and manage background jobs and scheduled tasks</p>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Jobs & Scheduling</h1>
+            <p className="text-gray-600 mt-2">Manage background jobs and task scheduling</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button onClick={createTestJob} variant="outline" size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Test Job
+            </Button>
+            <Button onClick={fetchJobs} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+        </div>
       </div>
+
+      {/* Message */}
+      {message && (
+        <div className={`p-4 rounded-md ${
+          message.type === 'success' 
+            ? 'bg-green-50 text-green-800 border border-green-200' 
+            : 'bg-red-50 text-red-800 border border-red-200'
+        }`}>
+          {message.text}
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
-            <span className="text-2xl">⚙️</span>
+            <span className="text-2xl">📋</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{jobs.length}</div>
+            <div className="text-2xl font-bold">{stats.total}</div>
             <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Queued</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending</CardTitle>
             <span className="text-2xl">⏳</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{jobs.filter(j => j.status === 'queued').length}</div>
+            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
             <p className="text-xs text-muted-foreground">Waiting to run</p>
           </CardContent>
         </Card>
@@ -207,10 +227,10 @@ export function AdminJobs() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Running</CardTitle>
-            <span className="text-2xl">▶️</span>
+            <span className="text-2xl">🏃</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{jobs.filter(j => j.status === 'running').length}</div>
+            <div className="text-2xl font-bold text-blue-600">{stats.running}</div>
             <p className="text-xs text-muted-foreground">Currently executing</p>
           </CardContent>
         </Card>
@@ -221,7 +241,7 @@ export function AdminJobs() {
             <span className="text-2xl">✅</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{jobs.filter(j => j.status === 'completed').length}</div>
+            <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
             <p className="text-xs text-muted-foreground">Successfully finished</p>
           </CardContent>
         </Card>
@@ -232,13 +252,13 @@ export function AdminJobs() {
             <span className="text-2xl">❌</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{jobs.filter(j => j.status === 'failed').length}</div>
+            <div className="text-2xl font-bold text-red-600">{stats.failed}</div>
             <p className="text-xs text-muted-foreground">Need attention</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters and Actions */}
+      {/* Controls */}
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -253,38 +273,37 @@ export function AdminJobs() {
                 />
               </div>
               
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="queued">Queued</SelectItem>
-                  <SelectItem value="running">Running</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="failed">Failed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="hydrate_title">Hydrate Title</SelectItem>
-                  <SelectItem value="generate_article_from_topic">Generate Article</SelectItem>
-                  <SelectItem value="refresh_providers">Refresh Providers</SelectItem>
-                  <SelectItem value="build_factsheet">Build Factsheet</SelectItem>
-                </SelectContent>
-              </Select>
+              <select 
+                value={statusFilter} 
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-40 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="running">Running</option>
+                <option value="completed">Completed</option>
+                <option value="failed">Failed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={fetchJobs}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
+              <Button 
+                onClick={processJobs} 
+                disabled={processing}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {processing ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Process Jobs
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -299,72 +318,52 @@ export function AdminJobs() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold">{formatJobType(job.type)}</h3>
+                    <h3 className="text-lg font-semibold line-clamp-1">{job.name}</h3>
                     <Badge className={getStatusColor(job.status)}>
-                      {getStatusIcon(job.status)}
-                      <span className="ml-1 capitalize">{job.status}</span>
+                      {job.status}
                     </Badge>
                     <Badge className={getPriorityColor(job.priority)}>
-                      {job.priority} priority
+                      {job.priority}
                     </Badge>
                   </div>
                   
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-3">
-                    <div>
-                      <span className="text-gray-500">Job ID:</span>
-                      <p className="font-mono text-xs">{job.id}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Attempts:</span>
-                      <p className="font-medium">{job.attempts}/{job.max_attempts}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Scheduled:</span>
-                      <p className="font-medium">{new Date(job.scheduled_at).toLocaleString()}</p>
-                    </div>
-                    {job.completed_at && (
-                      <div>
-                        <span className="text-gray-500">Completed:</span>
-                        <p className="font-medium">{new Date(job.completed_at).toLocaleString()}</p>
-                      </div>
-                    )}
+                  <div className="text-sm text-gray-600 mb-3">
+                    <span className="font-medium">Type:</span> {job.type} • 
+                    <span className="font-medium ml-2">Attempts:</span> {job.attempts}/{job.maxAttempts} • 
+                    <span className="font-medium ml-2">Created:</span> {new Date(job.created_at).toLocaleString()}
                   </div>
                   
-                  {job.error_message && (
-                    <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-3">
-                      <p className="text-sm text-red-800">
-                        <strong>Error:</strong> {job.error_message}
+                  {job.error && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+                      <p className="text-red-800 text-sm">
+                        <strong>Error:</strong> {job.error}
                       </p>
                     </div>
                   )}
                   
-                  <div className="text-sm text-gray-500">
-                    <span>Payload: {JSON.stringify(job.payload, null, 2)}</span>
+                  {job.result && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+                      <p className="text-green-800 text-sm">
+                        <strong>Result:</strong> {JSON.stringify(job.result)}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="text-xs text-gray-500">
+                    <span>ID: {job.id}</span>
+                    {job.scheduled_at && (
+                      <>
+                        <span className="mx-2">•</span>
+                        <span>Scheduled: {new Date(job.scheduled_at).toLocaleString()}</span>
+                      </>
+                    )}
+                    {job.completed_at && (
+                      <>
+                        <span className="mx-2">•</span>
+                        <span>Completed: {new Date(job.completed_at).toLocaleString()}</span>
+                      </>
+                    )}
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-2 ml-4">
-                  {job.status === 'queued' && (
-                    <Button variant="outline" size="sm">
-                      <Play className="h-4 w-4 mr-2" />
-                      Run Now
-                    </Button>
-                  )}
-                  {job.status === 'running' && (
-                    <Button variant="outline" size="sm">
-                      <Pause className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
-                  )}
-                  {job.status === 'failed' && (
-                    <Button variant="outline" size="sm">
-                      <Play className="h-4 w-4 mr-2" />
-                      Retry
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -376,6 +375,10 @@ export function AdminJobs() {
         <Card>
           <CardContent className="text-center py-12">
             <p className="text-gray-500">No jobs found matching your criteria.</p>
+            <Button onClick={createTestJob} className="mt-4">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Test Job
+            </Button>
           </CardContent>
         </Card>
       )}

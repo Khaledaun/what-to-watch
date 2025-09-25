@@ -1,83 +1,85 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/database';
+import { jobScheduler } from '@/lib/jobs';
 
 export const dynamic = 'force-dynamic';
-import { jobScheduler } from '@/lib/jobs';
-import { z } from 'zod';
 
-// Create job schema
-const createJobSchema = z.object({
-  type: z.enum([
-    'seed_lists',
-    'changes_scan',
-    'hydrate_title',
-    'refresh_providers',
-    'build_factsheet',
-    'twice_weekly_content_pack',
-    'refresh_affiliates',
-    'link_health_check',
-    'ingest_news_feeds',
-    'news_entity_linking'
-  ]),
-  payload: z.any().optional(),
-  scheduled_for: z.string().optional(),
-});
-
-// GET /api/admin/jobs - List jobs
+// GET /api/admin/jobs - List all jobs
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
-    const type = searchParams.get('type');
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    let query = db.ensureClient().from('jobs').select('*');
-    
-    if (status) {
-      query = query.eq('status', status);
-    }
-    
-    if (type) {
-      query = query.eq('type', type);
-    }
-    
-    const { data: jobs, error } = await query
-      .limit(limit)
-      .order('created_at', { ascending: false });
+    console.log('📋 Fetching jobs...');
 
-    if (error) {
-      return NextResponse.json({ error: 'Failed to fetch jobs' }, { status: 500 });
-    }
+    // Get all jobs
+    const allJobs = await jobScheduler.getAllJobs();
+    
+    // Filter by status if provided
+    const filteredJobs = status 
+      ? allJobs.filter(job => job.status === status)
+      : allJobs;
 
-    return NextResponse.json({ jobs });
+    // Limit results
+    const jobs = filteredJobs.slice(0, limit);
+
+    console.log(`📊 Found ${jobs.length} jobs (${allJobs.length} total)`);
+
+    return NextResponse.json({
+      success: true,
+      jobs,
+      total: allJobs.length,
+      filtered: jobs.length,
+      status: status || 'all'
+    });
+
   } catch (error) {
     console.error('Jobs API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({
+      success: false,
+      message: 'Failed to fetch jobs',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
 
-// POST /api/admin/jobs - Create job
+// POST /api/admin/jobs - Create a new job
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const validatedData = createJobSchema.parse(body);
+    const { name, type, payload, priority = 'medium', scheduled_at } = body;
 
-    const job = await jobScheduler.schedule({
-      type: validatedData.type,
-      payload: validatedData.payload,
-      priority: 'medium',
-      maxAttempts: 3,
-      scheduledAt: validatedData.scheduled_for || new Date().toISOString()
-    });
-
-    return NextResponse.json({ job });
-  } catch (error) {
-    console.error('Create job error:', error);
-    
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid input', details: error.errors }, { status: 400 });
+    if (!name || !type) {
+      return NextResponse.json({
+        success: false,
+        message: 'Job name and type are required'
+      }, { status: 400 });
     }
 
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.log(`➕ Creating job: ${name} (${type})`);
+
+    const job = await jobScheduler.schedule({
+      name,
+      type,
+      payload,
+      priority,
+      scheduled_at
+    });
+
+    console.log(`✅ Job created: ${job.id}`);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Job created successfully',
+      job
+    });
+
+  } catch (error) {
+    console.error('Create job API error:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Failed to create job',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

@@ -1,123 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/database';
+import { jobExecutor, jobScheduler } from '@/lib/jobs';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const client = db.ensureClient();
-    
-    if (!client) {
-      // Return mock response when database is not available
-      return NextResponse.json({
-        success: true,
-        processed: 3,
-        message: 'Processed mock jobs (database not available)',
-        jobs: [
-          {
-            id: '1',
-            type: 'content_generation',
-            status: 'completed',
-            result: 'Generated article: Top 10 Action Movies on Netflix 2024'
-          },
-          {
-            id: '2',
-            type: 'seo_optimization',
-            status: 'completed',
-            result: 'Optimized SEO for 5 articles'
-          },
-          {
-            id: '3',
-            type: 'image_processing',
-            status: 'completed',
-            result: 'Processed 12 movie poster images'
-          }
-        ]
-      });
-    }
+    console.log('🔄 Processing scheduled jobs...');
 
-    // Get pending jobs from database
-    const { data: pendingJobs, error: fetchError } = await client
-      .from('job_logs')
-      .select('*')
-      .eq('status', 'pending')
-      .order('created_at', { ascending: true })
-      .limit(10);
+    // Get all pending jobs using the real job system
+    const pendingJobs = await jobScheduler.getPendingJobs();
+    console.log(`Found ${pendingJobs.length} pending jobs`);
 
-    if (fetchError) {
-      console.error('Error fetching pending jobs:', fetchError);
-      return NextResponse.json({
-        success: false,
-        message: 'Failed to fetch pending jobs',
-        error: fetchError.message
-      }, { status: 500 });
-    }
-
-    if (!pendingJobs || pendingJobs.length === 0) {
+    if (pendingJobs.length === 0) {
       return NextResponse.json({
         success: true,
         processed: 0,
-        message: 'No pending jobs to process'
+        message: 'No pending jobs to process',
+        jobs: []
       });
     }
 
-    // Process each job
+    // Process each job using the real job executor
     const processedJobs = [];
+    let successCount = 0;
+    let failedCount = 0;
+
     for (const job of pendingJobs) {
       try {
-        // Simulate job processing
-        const result = await processJob(job);
+        console.log(`⚡ Processing job: ${job.name} (ID: ${job.id})`);
+        await jobExecutor.execute(job);
+        successCount++;
         
-        // Update job status
-        const { error: updateError } = await client
-          .from('job_logs')
-          .update({
-            status: 'completed',
-            result: result,
-            completed_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', job.id);
-
-        if (updateError) {
-          console.error('Error updating job:', updateError);
-          continue;
-        }
-
         processedJobs.push({
           id: job.id,
-          type: job.job_type,
+          name: job.name,
+          type: job.type,
           status: 'completed',
-          result: result
+          result: 'Job completed successfully'
         });
-
-      } catch (jobError) {
-        console.error('Error processing job:', jobError);
         
-        // Mark job as failed
-        await client
-          .from('job_logs')
-          .update({
-            status: 'failed',
-            error: jobError instanceof Error ? jobError.message : 'Unknown error',
-            completed_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', job.id);
-
+        console.log(`✅ Job completed: ${job.name}`);
+      } catch (error) {
+        console.error(`❌ Job failed: ${job.name}`, error);
+        failedCount++;
+        
         processedJobs.push({
           id: job.id,
-          type: job.job_type,
+          name: job.name,
+          type: job.type,
           status: 'failed',
-          error: jobError instanceof Error ? jobError.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error'
         });
       }
     }
 
+    const message = `Processed ${processedJobs.length} jobs (${successCount} successful, ${failedCount} failed)`;
+    console.log(`📊 Job processing complete: ${message}`);
+
     return NextResponse.json({
       success: true,
       processed: processedJobs.length,
-      message: `Processed ${processedJobs.length} jobs`,
+      successful: successCount,
+      failed: failedCount,
+      message,
       jobs: processedJobs
     });
 
@@ -128,25 +73,5 @@ export async function POST(request: NextRequest) {
       message: 'Failed to process jobs',
       error: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
-  }
-}
-
-async function processJob(job: any) {
-  // Simulate different job types
-  switch (job.job_type) {
-    case 'content_generation':
-      return `Generated article: ${job.data?.title || 'Untitled Article'}`;
-    
-    case 'seo_optimization':
-      return `Optimized SEO for ${job.data?.articleCount || 1} articles`;
-    
-    case 'image_processing':
-      return `Processed ${job.data?.imageCount || 1} images`;
-    
-    case 'data_sync':
-      return `Synced ${job.data?.recordCount || 1} records from TMDB`;
-    
-    default:
-      return `Completed ${job.job_type} job`;
   }
 }

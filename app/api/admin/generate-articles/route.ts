@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/database';
 import { aiClient } from '@/lib/ai-client';
+import { jobScheduler } from '@/lib/jobs';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,13 +29,35 @@ export async function POST(request: NextRequest) {
     // Generate topics using AI
     const topics = await aiClient.generateArticleTopics(topicCount);
     
+    // Create jobs for each topic
+    const createdJobs = [];
+    for (const topic of topics) {
+      try {
+        const job = await jobScheduler.schedule({
+          name: `Generate Article: ${topic.title}`,
+          type: 'article_generation',
+          payload: {
+            topicId: topic.slug,
+            topicTitle: topic.title,
+            category: topic.category,
+            keywords: topic.keywords
+          },
+          priority: 'medium'
+        });
+        createdJobs.push(job);
+      } catch (error) {
+        console.error('Error creating job for topic:', topic.title, error);
+      }
+    }
+    
     if (!client) {
       // Return AI-generated topics when database is not available
       return NextResponse.json({
         success: true,
         count: topics.length,
-        message: `Generated ${topics.length} AI-powered article topics (database not available)`,
+        message: `Generated ${topics.length} AI-powered article topics and created ${createdJobs.length} jobs (database not available)`,
         topics: topics,
+        jobs: createdJobs,
         aiProvider: aiClient.getDefaultProvider(),
         availableProviders
       });
@@ -108,8 +131,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       count: fullArticles.length,
-      message: `Generated ${fullArticles.length} ${generateFullArticles ? 'full articles' : 'article topics'} using AI`,
+      message: `Generated ${fullArticles.length} ${generateFullArticles ? 'full articles' : 'article topics'} using AI and created ${createdJobs.length} jobs`,
       topics: data,
+      jobs: createdJobs,
       aiProvider: aiClient.getDefaultProvider(),
       availableProviders,
       generatedFullArticles: generateFullArticles
