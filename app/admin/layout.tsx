@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { AdminSidebar } from '@/components/admin/AdminSidebar'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 
@@ -14,14 +15,16 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminHeader />
-      <div className="flex pt-16">
-        <AdminSidebar />
-        <main className="flex-1 lg:ml-64 p-6">
-          {children}
-        </main>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gray-50">
+        <AdminHeader />
+        <div className="flex pt-16">
+          <AdminSidebar />
+          <main className="flex-1 lg:ml-64 p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   )
 }

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { ArticleUpload } from '@/components/admin/ArticleUpload';
@@ -65,7 +66,8 @@ export default function ContentStudioPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <ErrorBoundary>
+      <div className="space-y-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">✍️ Content Studio</h1>
         <p className="mt-2 text-gray-600">
@@ -450,5 +452,6 @@ export default function ContentStudioPage() {
                 <ArticleOrganizer />
               )}
     </div>
+    </ErrorBoundary>
   );
 }

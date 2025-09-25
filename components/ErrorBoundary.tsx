@@ -1,107 +1,94 @@
 'use client'
 
-import { Component, ReactNode } from 'react'
-import { Button } from '@/components/ui/button'
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
+import React from 'react'
 
-interface Props {
-  children: ReactNode
-  fallback?: ReactNode
-  onError?: (error: Error, errorInfo: any) => void
-}
-
-interface State {
+interface ErrorBoundaryState {
   hasError: boolean
   error?: Error
-  errorInfo?: any
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+interface ErrorBoundaryProps {
+  children: React.ReactNode
+  fallback?: React.ComponentType<{ error: Error; resetError: () => void }>
+}
+
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props)
     this.state = { hasError: false }
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error }
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo)
-    
-    this.setState({ errorInfo })
-    
-    // Call custom error handler if provided
-    this.props.onError?.(error, errorInfo)
-    
-    // In production, you would send this to an error reporting service
-    if (process.env.NODE_ENV === 'production') {
-      // Example: Sentry.captureException(error, { extra: errorInfo })
-    }
   }
 
-  handleRetry = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined })
-  }
-
-  handleGoHome = () => {
-    window.location.href = '/'
+  resetError = () => {
+    this.setState({ hasError: false, error: undefined })
   }
 
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
-        return this.props.fallback
+        const FallbackComponent = this.props.fallback
+        return <FallbackComponent error={this.state.error!} resetError={this.resetError} />
       }
 
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center">
-            <div className="mb-4">
-              <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Something went wrong
-              </h1>
-              <p className="text-gray-600 mb-6">
-                We encountered an unexpected error. This has been logged and we'll look into it.
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+          <div className="max-w-md mx-auto text-center">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
+              <div className="text-red-500 text-6xl mb-4">⚠️</div>
+              <h1 className="text-2xl font-bold text-white mb-4">Something went wrong</h1>
+              <p className="text-gray-300 mb-6">
+                We encountered an unexpected error. Our team has been notified and is working to fix it.
               </p>
-            </div>
-
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-left">
-                <h3 className="text-sm font-medium text-red-800 mb-2">Error Details:</h3>
-                <p className="text-sm text-red-700 font-mono">
-                  {this.state.error.message}
-                </p>
-                {this.state.error.stack && (
-                  <details className="mt-2">
-                    <summary className="text-sm text-red-600 cursor-pointer">
-                      Stack Trace
-                    </summary>
-                    <pre className="text-xs text-red-600 mt-2 whitespace-pre-wrap">
-                      {this.state.error.stack}
-                    </pre>
-                  </details>
-                )}
+              
+              {this.state.error && (
+                <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 mb-6 text-left">
+                  <h3 className="text-red-200 font-semibold mb-2">Error Details:</h3>
+                  <p className="text-red-100 text-sm font-mono break-all">
+                    {this.state.error.message}
+                  </p>
+                  {this.state.error.stack && (
+                    <details className="mt-2">
+                      <summary className="text-red-200 text-xs cursor-pointer">Stack Trace</summary>
+                      <pre className="text-red-100 text-xs mt-2 whitespace-pre-wrap break-all">
+                        {this.state.error.stack}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+              )}
+              
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={this.resetError}
+                  className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-lg transition-colors"
+                >
+                  Try Again
+                </button>
+                <button
+                  onClick={() => window.location.href = '/'}
+                  className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors"
+                >
+                  Go Home
+                </button>
               </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={this.handleRetry}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Try Again
-              </Button>
-              <Button
-                onClick={this.handleGoHome}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Home className="h-4 w-4" />
-                Go Home
-              </Button>
+              
+              <div className="mt-6 text-yellow-200">
+                <h3 className="text-sm font-semibold mb-2">Need Help?</h3>
+                <p className="text-xs text-gray-300 mb-3">
+                  If this problem persists, please contact our support team with the error details above.
+                </p>
+                <div className="flex gap-4 justify-center text-sm">
+                  <a href="/blog" className="text-yellow-200 hover:text-yellow-100">Read our blog</a>
+                  <a href="/" className="text-yellow-200 hover:text-yellow-100">Browse recommendations</a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -110,32 +97,4 @@ export class ErrorBoundary extends Component<Props, State> {
 
     return this.props.children
   }
-}
-
-// Hook for functional components to handle errors
-export function useErrorHandler() {
-  return (error: Error, errorInfo?: any) => {
-    console.error('Error caught by useErrorHandler:', error, errorInfo)
-    
-    // In production, send to error reporting service
-    if (process.env.NODE_ENV === 'production') {
-      // Example: Sentry.captureException(error, { extra: errorInfo })
-    }
-  }
-}
-
-// Higher-order component for error handling
-export function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
-  errorBoundaryProps?: Omit<Props, 'children'>
-) {
-  const WrappedComponent = (props: P) => (
-    <ErrorBoundary {...errorBoundaryProps}>
-      <Component {...props} />
-    </ErrorBoundary>
-  )
-
-  WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`
-  
-  return WrappedComponent
 }
